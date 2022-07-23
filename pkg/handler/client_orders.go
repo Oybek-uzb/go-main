@@ -1,0 +1,408 @@
+package handler
+
+import (
+	"abir/models"
+	"abir/pkg/utils"
+	"database/sql"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"strconv"
+)
+func (h *Handler) clientOrdersActivityActive(c *gin.Context)  {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+	page := 1
+	pageParam, ok := c.GetQuery("page")
+	if ok {
+		pageFromQuery, err := strconv.Atoi(pageParam)
+		if err != nil {
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		page = pageFromQuery
+	}
+	districts, err := h.services.Utils.GetDistrictsArr(langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	tariffs, err := h.services.Utils.GetTariffs(langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	lists, _, err := h.services.ClientOrders.Activity(userId, page, "active")
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	var direction string
+	var directionWithTariff string
+	for i, list := range lists {
+		if list.OrderType == "city" {
+			if list.To == nil{
+				direction = fmt.Sprintf("%s -> %s", list.From, utils.Translation["not_set"][langId])
+			}else{
+				direction = fmt.Sprintf("%s -> %s", list.From, *list.To)
+			}
+
+		}else{
+			fromId, err := strconv.Atoi(list.From)
+			if err != nil {
+				continue
+			}
+			if list.To != nil{
+				toId, err := strconv.Atoi(*list.To)
+				if err != nil {
+					continue
+				}
+				direction = fmt.Sprintf("%s -> %s", districts[fromId], districts[toId])
+			}
+		}
+		if list.TariffId != nil{
+			directionWithTariff = fmt.Sprintf("%s, %s",tariffs[*list.TariffId],direction)
+			lists[i].Direction = &directionWithTariff
+		}else{
+			lists[i].Direction = &direction
+		}
+	}
+	newSuccessResponse(c, http.StatusOK, lists)
+}
+func (h *Handler) clientOrdersActivityRecentlyCompleted(c *gin.Context)  {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+	districts, err := h.services.Utils.GetDistrictsArr(langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	tariffs, err := h.services.Utils.GetTariffs(langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	lists, _, err := h.services.ClientOrders.Activity(userId, 1, "recently-completed")
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	var direction string
+	var directionWithTariff string
+	for i, list := range lists {
+		if list.OrderType == "city" {
+			if list.To == nil{
+				direction = fmt.Sprintf("%s -> %s", list.From, utils.Translation["not_set"][langId])
+			}else{
+				direction = fmt.Sprintf("%s -> %s", list.From, *list.To)
+			}
+
+		}else{
+			fromId, err := strconv.Atoi(list.From)
+			if err != nil {
+				continue
+			}
+			if list.To != nil{
+				toId, err := strconv.Atoi(*list.To)
+				if err != nil {
+					continue
+				}
+				direction = fmt.Sprintf("%s -> %s", districts[fromId], districts[toId])
+			}
+		}
+		if list.TariffId != nil{
+			directionWithTariff = fmt.Sprintf("%s, %s",tariffs[*list.TariffId],direction)
+			lists[i].Direction = &directionWithTariff
+		}else{
+			lists[i].Direction = &direction
+		}
+	}
+	newSuccessResponse(c, http.StatusOK, lists)
+}
+func (h *Handler) clientOrdersActivityHistory(c *gin.Context)  {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+	districts, err := h.services.Utils.GetDistrictsArr(langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	tariffs, err := h.services.Utils.GetTariffs(langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	page := 1
+	pageParam, ok := c.GetQuery("page")
+	if ok {
+		pageFromQuery, err := strconv.Atoi(pageParam)
+		if err != nil {
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		page = pageFromQuery
+	}
+	lists, pagination, err := h.services.ClientOrders.Activity(userId, page, "history")
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	var direction string
+	var directionWithTariff string
+	for i, list := range lists {
+		if list.OrderType == "city" {
+			if list.To == nil{
+				direction = fmt.Sprintf("%s -> %s", list.From, utils.Translation["not_set"][langId])
+			}else{
+				direction = fmt.Sprintf("%s -> %s", list.From, *list.To)
+			}
+
+		}else{
+			fromId, err := strconv.Atoi(list.From)
+			if err != nil {
+				continue
+			}
+			if list.To != nil{
+				toId, err := strconv.Atoi(*list.To)
+				if err != nil {
+					continue
+				}
+				direction = fmt.Sprintf("%s -> %s", districts[fromId], districts[toId])
+			}
+		}
+		if list.TariffId != nil{
+			directionWithTariff = fmt.Sprintf("%s, %s",tariffs[*list.TariffId],direction)
+			lists[i].Direction = &directionWithTariff
+		}else{
+			lists[i].Direction = &direction
+		}
+	}
+	pagination.Data = lists
+	newSuccessResponse(c, http.StatusOK, pagination)
+}
+func (h *Handler) clientOrdersRideList(c *gin.Context)  {
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+	var ride models.Ride
+
+	if err := c.Bind(&ride); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = ride.ValidateSearch()
+	if err != nil {
+		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	page := 1
+	pageParam, ok := c.GetQuery("page")
+	if ok {
+		pageFromQuery, err := strconv.Atoi(pageParam)
+		if err != nil {
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		}
+		page = pageFromQuery
+	}
+	list, pagination, err := h.services.ClientOrders.RideList(ride, langId, page)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for i, rideList := range list {
+		driver, car, carInfo, err := h.services.Authorization.GetDriverInfo(langId, rideList.DriverId)
+		if err != nil {
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		list[i].DriverCarInfo = &carInfo
+		list[i].DriverCar = &map[string]interface{}{
+			"car_number": car.CarNumber,
+		}
+		list[i].Driver = &map[string]interface{}{
+			"name": driver.Name,
+			"surname": driver.Surname,
+			"photo": driver.Photo,
+			"phone": driver.Phone,
+			"rating": driver.Rating,
+		}
+	}
+	pagination.Data = list
+	newSuccessResponse(c, http.StatusOK, pagination)
+}
+func (h *Handler) clientOrdersRideSingle(c *gin.Context)  {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
+	}
+	list, err := h.services.ClientOrders.RideSingle(langId, id, userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	driver, car, carInfo, err := h.services.Authorization.GetDriverInfo(langId, list.DriverId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	list.DriverCarInfo = &carInfo
+	list.DriverCar = &map[string]interface{}{
+		"car_number": car.CarNumber,
+	}
+	list.Driver = &map[string]interface{}{
+		"name": driver.Name,
+		"surname": driver.Surname,
+		"photo": driver.Photo,
+		"phone": driver.Phone,
+		"rating": driver.Rating,
+	}
+	newSuccessResponse(c, http.StatusOK, list)
+}
+
+func (h *Handler) clientOrdersRideSingleBook(c *gin.Context)  {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	rideId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
+	}
+	var bookRide models.Ride
+	if err = c.Bind(&bookRide); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = bookRide.ValidateBook()
+	if err != nil {
+		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	orderId, err := h.services.ClientOrders.RideSingleBook(bookRide, rideId, userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, map[string]int{
+		"id": orderId,
+	})
+}
+func (h *Handler) clientOrdersRideSingleCancel(c *gin.Context)  {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	rideId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
+	}
+	orderId, err := strconv.Atoi(c.Param("order_id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid order_id param")
+		return
+	}
+	var cancelRide models.CanceledOrders
+	if err = c.Bind(&cancelRide); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.services.ClientOrders.RideSingleCancel(cancelRide, rideId, orderId, userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, "ok")
+}
+func (h *Handler) clientOrdersRideSingleStatus(c *gin.Context)  {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	rideId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid id param")
+		return
+	}
+
+	status, err := h.services.ClientOrders.RideSingleStatus(rideId, userId)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		}else{
+			newErrorResponse(c, http.StatusInternalServerError, "Ride not booked")
+		}
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, status)
+}
+
+func (h *Handler) clientChatFetch(c *gin.Context)  {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	rideId := 0
+	rideIdParam, ok := c.GetQuery("ride_id")
+	if ok {
+		rideIdFromQuery, err := strconv.Atoi(rideIdParam)
+		if err != nil {
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		rideId = rideIdFromQuery
+	}
+	orderId := 0
+	orderIdParam, ok := c.GetQuery("order_id")
+	if ok {
+		orderIdFromQuery, err := strconv.Atoi(orderIdParam)
+		if err != nil {
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		orderId = orderIdFromQuery
+	}
+	lists, err := h.services.ClientOrders.ChatFetch(userId, rideId,orderId)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, lists)
+}

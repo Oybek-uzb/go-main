@@ -1,0 +1,23 @@
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS clients;
+DROP TABLE IF EXISTS saved_addresses;
+DROP TABLE IF EXISTS credit_cards;
+DROP TABLE IF EXISTS rides;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS interregional_orders;
+DROP TABLE IF EXISTS city_orders;
+DROP TABLE IF EXISTS canceled_orders;
+DROP TABLE IF EXISTS chat_messages;
+DROP TABLE IF EXISTS ride_view_counts;
+DROP TABLE IF EXISTS driver_enabled_tariffs;
+DROP TABLE IF EXISTS driver_statuses;
+
+DROP TYPE IF EXISTS gender;
+DROP TYPE IF EXISTS user_type;
+DROP TYPE IF EXISTS place_type;
+DROP TYPE IF EXISTS ride_status;
+DROP TYPE IF EXISTS order_type;
+DROP TYPE IF EXISTS order_status;
+DROP TYPE IF EXISTS payment_type;
+DROP TYPE IF EXISTS cargo_type;
+DROP TYPE IF EXISTS message_type;

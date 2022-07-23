@@ -1,0 +1,34 @@
+port: "8010"
+
+sms_broker:
+  endpoint: "http://91.204.239.44/broker-api/send"
+  originator: "AllOne"
+  msg_alias: "ao"
+
+auth:
+  hash_salt: "PIxP1o559vv5SQGiOEat"
+  signing_key: "PIxP1o559vv5SQGiOEat"
+
+aes:
+  cipher: "0a1b2c3d45e67f89"
+
+payment:
+  endpoint: "https://topup.apelsin.uz/api/merchant"
+
+db:
+  username: "abir"
+  host: "62.109.23.60"
+  port: "5432"
+  dbname: "abir"
+  sslmode: "disable"
+  dashboard_schema: "dashboard"
+  public_schema: "public"
+
+storage:
+  url: "62.109.23.60:9000"
+  endpoint: "storage.abir.uz"
+  bucket: "abir"
+
+vars:
+  capital_id: 14
+  items_limit: 10
