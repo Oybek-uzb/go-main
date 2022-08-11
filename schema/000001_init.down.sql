@@ -10,7 +10,6 @@ DROP TABLE IF EXISTS canceled_orders;
 DROP TABLE IF EXISTS chat_messages;
 DROP TABLE IF EXISTS ride_view_counts;
 DROP TABLE IF EXISTS driver_enabled_tariffs;
-DROP TABLE IF EXISTS driver_statuses;
 
 DROP TYPE IF EXISTS gender;
 DROP TYPE IF EXISTS user_type;

@@ -10,7 +10,6 @@ import (
 	"abir/pkg/storage"
 	"flag"
 	"github.com/streadway/amqp"
-
 	//ps "abir/proto/proto"
 	"context"
 	"github.com/go-redis/redis"
@@ -27,7 +26,9 @@ import (
 	"syscall"
 	"time"
 )
+
 var rootPath *string
+
 func init() {
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&logrus.JSONFormatter{})
@@ -59,7 +60,7 @@ func init() {
 	}
 }
 
-func main()  {
+func main() {
 	//res, err := utils.GetCardToken("8600140209489880", "2511")
 	//if err != nil {
 	//	logrus.Fatalf("%s", err)
@@ -77,26 +78,15 @@ func main()  {
 	}
 	defer ch.Close()
 
-	err = ch.Publish(
-		"",
-		"socket-service",
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte("Hello World"),
-		},
-	)
-
 	minioStorage, err := initStorage()
 	if err != nil {
 		logrus.Fatalf("Error occurred on storage initialization: %s\n", err.Error())
 	}
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr:     "localhost:6379",
 		Password: "",
-		DB: 0,
+		DB:       0,
 	})
 
 	_, err = redisClient.Ping().Result()
@@ -105,25 +95,25 @@ func main()  {
 	}
 
 	dashboardDb, err := postgres.NewPostgresDB(postgres.Config{
-		Host: viper.GetString("db.host"),
-		Port: viper.GetString("db.port"),
+		Host:     viper.GetString("db.host"),
+		Port:     viper.GetString("db.port"),
 		Username: viper.GetString("db.username"),
-		DBName: viper.GetString("db.dbname"),
-		SSLMode: viper.GetString("db.sslmode"),
+		DBName:   viper.GetString("db.dbname"),
+		SSLMode:  viper.GetString("db.sslmode"),
 		Password: os.Getenv("DB_PASSWORD"),
-		Schema: viper.GetString("db.dashboard_schema"),
+		Schema:   viper.GetString("db.dashboard_schema"),
 	})
 	if err != nil {
 		logrus.Fatalf("failed to initialize dashboard db: %s", err.Error())
 	}
 	publicDb, err := postgres.NewPostgresDB(postgres.Config{
-		Host: viper.GetString("db.host"),
-		Port: viper.GetString("db.port"),
+		Host:     viper.GetString("db.host"),
+		Port:     viper.GetString("db.port"),
 		Username: viper.GetString("db.username"),
-		DBName: viper.GetString("db.dbname"),
-		SSLMode: viper.GetString("db.sslmode"),
+		DBName:   viper.GetString("db.dbname"),
+		SSLMode:  viper.GetString("db.sslmode"),
 		Password: os.Getenv("DB_PASSWORD"),
-		Schema: viper.GetString("db.public_schema"),
+		Schema:   viper.GetString("db.public_schema"),
 	})
 	if err != nil {
 		logrus.Fatalf("failed to initialize public db: %s", err.Error())

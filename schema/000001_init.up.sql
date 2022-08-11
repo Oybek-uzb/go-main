@@ -3,10 +3,11 @@ CREATE TYPE user_type AS ENUM ('client', 'driver');
 CREATE TYPE place_type AS ENUM ('home', 'work', 'custom');
 CREATE TYPE ride_status AS ENUM ('new', 'on_the_way', 'cancelled', 'done');
 CREATE TYPE order_type AS ENUM ('city', 'interregional');
-CREATE TYPE order_status AS ENUM ('client_cancelled', 'driver_cancelled', 'new', 'driver_accepted', 'driver_arrived', 'trip_started', 'order_completed');
+CREATE TYPE order_status AS ENUM ('client_cancelled', 'driver_cancelled', 'new', 'driver_accepted', 'driver_arrived', 'client_going_out', 'trip_started', 'order_completed');
 CREATE TYPE payment_type AS ENUM ('cash', 'card');
 CREATE TYPE cargo_type AS ENUM ('no', 'small', 'medium', 'large');
 CREATE TYPE message_type AS ENUM ('message', 'audio', 'file');
+CREATE TYPE driver_sts AS ENUM ('online', 'offline', 'on_the_way');
 
 CREATE TABLE IF NOT EXISTS users
 (
@@ -117,9 +118,34 @@ CREATE TABLE IF NOT EXISTS canceled_orders
     user_type user_type not null default 'client',
     user_id int not null,
     order_id int not null,
-    reason_id int not null,
     comments varchar(500),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS canceled_order_reasons
+(
+    id serial not null unique,
+    canceled_order_id int not null,
+    reason_id int not null
+);
+
+CREATE TABLE IF NOT EXISTS rated_orders
+(
+    id serial not null unique,
+    order_type order_type not null default 'city',
+    user_type user_type not null default 'client',
+    rate int not null,
+    user_id int not null,
+    order_id int not null,
+    comments varchar(500),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS rated_order_reasons
+(
+    id serial not null unique,
+    rated_order_id int not null,
+    reason_id int not null
 );
 
 CREATE TABLE IF NOT EXISTS chat_messages
@@ -155,5 +181,5 @@ CREATE TABLE IF NOT EXISTS driver_statuses
 (
     id serial not null unique,
     user_id int not null,
-    is_online boolean not null default false
+    driver_status driver_sts not null default 'offline'
 );

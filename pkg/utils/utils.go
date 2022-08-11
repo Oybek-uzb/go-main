@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"abir/models"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
@@ -9,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hashicorp/go-uuid"
-	geo "github.com/kellydunn/golang-geo"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"image"
@@ -27,25 +27,25 @@ import (
 func SendSms(login, code string) error {
 	msgId := strconv.Itoa(rand.Intn(10000000))
 	data := map[string]interface{}{"messages": []map[string]interface{}{{
-		"recipient": login,
-		"message-id": viper.GetString("sms_broker.msg_alias")+msgId,
+		"recipient":  login,
+		"message-id": viper.GetString("sms_broker.msg_alias") + msgId,
 		"sms": map[string]interface{}{
 			"originator": viper.GetString("sms_broker.originator"),
 			"content": map[string]string{
 				"text": code,
 			},
 		},
-	},}}
+	}}}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("POST", viper.GetString("sms_broker.endpoint"),  bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", viper.GetString("sms_broker.endpoint"), bytes.NewBuffer(jsonData))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Basic "+ os.Getenv("SMS_BROKER_PASSWORD"))
+	req.Header.Set("Authorization", "Basic "+os.Getenv("SMS_BROKER_PASSWORD"))
 
 	client := &http.Client{
 		Timeout: 5 * time.Second,
@@ -97,18 +97,18 @@ func GenerateFileURL(fileName, folder, size string) *string {
 }
 
 func GetFileUrl(fileName []string) *string {
-	if len(fileName) <= 1{
+	if len(fileName) <= 1 {
 		return nil
-	}else{
-		return GenerateFileURL( fileName[1], fileName[0], "original")
+	} else {
+		return GenerateFileURL(fileName[1], fileName[0], "original")
 	}
 }
 
 func GetSmallFileUrl(fileName []string) *string {
-	if len(fileName) <= 1{
+	if len(fileName) <= 1 {
 		return nil
-	}else{
-		return GenerateFileURL( fileName[1], fileName[0], "small")
+	} else {
+		return GenerateFileURL(fileName[1], fileName[0], "small")
 	}
 }
 
@@ -173,36 +173,280 @@ func StripString(s string) string {
 	}
 	return result.String()
 }
-type LList struct {
-	Lat float64 `json:"lat"`
-	Lng float64 `json:"lng"`
+
+//type LList struct {
+//	Lat float64 `json:"lat"`
+//	Lng float64 `json:"lng"`
+//}
+//type RList struct {
+//	RegionId int `json:"region_id"`
+//	Points []LList `json:"points"`
+//}
+//func InPolygon(jsn string, lat, lng float64) (int, error) {
+//	start := time.Now()
+//	var result []RList
+//	err := json.Unmarshal([]byte(jsn), &result)
+//	if err != nil {
+//		return 0, err
+//	}
+//	var poly []*geo.Point
+//	for _, list := range result {
+//		poly = []*geo.Point{}
+//		for _, point := range list.Points {
+//			poly = append(poly, geo.NewPoint(point.Lat, point.Lng))
+//		}
+//		newPoly := geo.NewPolygon(poly)
+//		contains := newPoly.Contains(geo.NewPoint(lat, lng))
+//		if contains {
+//			duration := time.Since(start)
+//			logrus.Print(duration.Milliseconds())
+//			return list.RegionId, nil
+//		}
+//	}
+//
+//	return 0, nil
+//}
+type DistrictIdResponse struct {
+	RegionId   int `json:"region_id"`
+	DistrictId int `json:"district_id"`
 }
-type RList struct {
-	RegionId int `json:"region_id"`
-	Points []LList `json:"points"`
+type GeoMe struct {
+	Data []DistrictIdResponse `json:"data"`
 }
-func InPolygon(jsn string, lat, lng float64) (int, error) {
-	start := time.Now()
-	var result []RList
-	err := json.Unmarshal([]byte(jsn), &result)
+
+type CalculateRouteResult struct {
+	Inside  int `json:"inside"`
+	Outside int `json:"outside"`
+}
+type CalculateRouteResponse struct {
+	Response CalculateRouteResult `json:"response"`
+}
+
+func GetStats(driverId int, typ string, start int) (any, error) {
+	url := fmt.Sprintf(viper.GetString("services.dash")+"/api/v1/mobile/driver/%s/statistics/?driver=%v&start=%v", typ, driverId, start)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, err
 	}
-	var poly []*geo.Point
-	for _, list := range result {
-		poly = []*geo.Point{}
-		for _, point := range list.Points {
-			poly = append(poly, geo.NewPoint(point.Lat, point.Lng))
-		}
-		newPoly := geo.NewPolygon(poly)
-		contains := newPoly.Contains(geo.NewPoint(lat, lng))
-		if contains {
-			duration := time.Since(start)
-			logrus.Print(duration.Milliseconds())
-			return list.RegionId, nil
-		}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer 55d0058d0aadf54a2592dab8ba4543b23724ffbf")
+
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, errors.New("couldn't connect to dash api")
+	}
+	if resp.StatusCode != http.StatusOK {
+		return 0, errors.New("wrong request body")
+	}
+	defer resp.Body.Close()
+	var res any
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+	err = json.Unmarshal(response, &res)
+	if err != nil {
+		return 0, errors.New("error while parsing json")
+	}
+	return res, nil
+}
+func GetStatOrders(driverId, langId int) (any, error) {
+	url := fmt.Sprintf(viper.GetString("services.dash")+"/api/v1/mobile/driver/statistics/?driver=%v&lang=%v", driverId, langId)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer 55d0058d0aadf54a2592dab8ba4543b23724ffbf")
+
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, errors.New("couldn't connect to dash api")
+	}
+	if resp.StatusCode != http.StatusOK {
+		return 0, errors.New("wrong request body")
+	}
+	defer resp.Body.Close()
+	var res any
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+	err = json.Unmarshal(response, &res)
+	if err != nil {
+		return 0, errors.New("error while parsing json")
+	}
+	return res, nil
+}
+func GetMyDistrictId(lat, lng float64) (int, error) {
+	url := fmt.Sprintf(viper.GetString("services.geo")+"/me?lat=%v&lng=%v", lat, lng)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, errors.New("couldn't connect to geo api")
 	}
 
-	return 0, nil
+	if resp.StatusCode != http.StatusOK {
+		return 0, errors.New("wrong request body")
+	}
+	defer resp.Body.Close()
+	var responseData GeoMe
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+	err = json.Unmarshal(response, &responseData)
+	if err != nil {
+		return 0, errors.New("error while parsing json")
+	}
+	if len(responseData.Data) == 0 {
+		return 0, errors.New("district not found")
+	}
+	return responseData.Data[0].DistrictId, nil
 }
 
+func CalculateRoute(points [][2]float64) (int, int, error) {
+	var newLatLng []models.LatLng
+	for _, point := range points {
+		newLatLng = append(newLatLng, models.LatLng{Lat: point[1], Lng: point[0]})
+	}
+	newPoints := models.PointsRequest{Points: newLatLng}
+	jsonData, err := json.Marshal(newPoints)
+	if err != nil {
+		return 0, 0, err
+	}
+	req, err := http.NewRequest("POST", viper.GetString("services.geo")+"/calculate", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return 0, 0, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, 0, errors.New("couldn't connect to geo api")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, 0, errors.New("wrong request body")
+	}
+	defer resp.Body.Close()
+	var responseData CalculateRouteResponse
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, 0, err
+	}
+	err = json.Unmarshal(response, &responseData)
+	if err != nil {
+		return 0, 0, errors.New("error while parsing json")
+	}
+	return responseData.Response.Inside, responseData.Response.Outside, nil
+}
+
+type SocketResponse struct {
+	Success bool `json:"success"`
+}
+
+func SearchTaxi(orderId int) error {
+	url := fmt.Sprintf(viper.GetString("services.socket")+"/search-drivers/%v", orderId)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.New("couldn't connect to socket api")
+	}
+	defer resp.Body.Close()
+	var responseData SocketResponse
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(response, &responseData)
+	if err != nil {
+		return errors.New("error while parsing json")
+	}
+	if !responseData.Success {
+		return errors.New("error while searching")
+	}
+	return nil
+}
+func SkipTaxi(orderId int) error {
+	url := fmt.Sprintf(viper.GetString("services.socket")+"/search-drivers/%v/skip", orderId)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.New("couldn't connect to socket api")
+	}
+	defer resp.Body.Close()
+	var responseData SocketResponse
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(response, &responseData)
+	if err != nil {
+		return errors.New("error while parsing json")
+	}
+	if !responseData.Success {
+		return errors.New("error while skipping")
+	}
+	return nil
+}
+
+func CancelTaxi(orderId int) error {
+	url := fmt.Sprintf(viper.GetString("services.socket")+"/search-drivers/%v/cancel", orderId)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.New("couldn't connect to socket api")
+	}
+	defer resp.Body.Close()
+	var responseData SocketResponse
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(response, &responseData)
+	if err != nil {
+		return errors.New("error while parsing json")
+	}
+	if !responseData.Success {
+		return errors.New("error while cancelling")
+	}
+	return nil
+}

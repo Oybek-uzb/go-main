@@ -9,48 +9,49 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 	"strconv"
+	"strings"
 )
 
 type ClientOrdersPostgres struct {
-	db *sqlx.DB
+	db   *sqlx.DB
+	dash *sqlx.DB
 }
 
-func NewClientOrdersPostgres(db *sqlx.DB) *ClientOrdersPostgres {
-	return &ClientOrdersPostgres{db: db}
+func NewClientOrdersPostgres(db *sqlx.DB, dash *sqlx.DB) *ClientOrdersPostgres {
+	return &ClientOrdersPostgres{db: db, dash: dash}
 }
 
-
-func (r *ClientOrdersPostgres) RideList(ride models.Ride, langId, page int) ([]models.ClientRideList, models.Pagination, error){
+func (r *ClientOrdersPostgres) RideList(ride models.Ride, langId, page int) ([]models.ClientRideList, models.Pagination, error) {
 	limit, err := strconv.Atoi(viper.GetString("vars.items_limit"))
 	if err != nil {
 		return []models.ClientRideList{}, models.Pagination{}, err
 	}
 	offset := limit * (page - 1)
 	var pagination models.Pagination
-	paginationQuery := fmt.Sprintf("SELECT count(*) AS total, $1 as current_page, CEIL(count(*)::decimal/$2) as last_page,$2 as per_page FROM %s WHERE departure_date::date = $3 AND departure_date::timestamp > NOW() AND from_district_id = $4 AND to_district_id = $5 AND status = $6",ridesTable)
-	err = r.db.Get(&pagination, paginationQuery, page, limit, ride.DepartureDate,ride.FromDistrictId, ride.ToDistrictId,"new")
+	paginationQuery := fmt.Sprintf("SELECT count(*) AS total, $1 as current_page, CEIL(count(*)::decimal/$2) as last_page,$2 as per_page FROM %s WHERE departure_date::date = $3 AND departure_date::timestamp > NOW() AND from_district_id = $4 AND to_district_id = $5 AND status = $6", ridesTable)
+	err = r.db.Get(&pagination, paginationQuery, page, limit, ride.DepartureDate, ride.FromDistrictId, ride.ToDistrictId, "new")
 	if err != nil {
 		return []models.ClientRideList{}, models.Pagination{}, err
 	}
 	var lists []models.ClientRideList
-	listQuery := fmt.Sprintf("SELECT id as ride_id,driver_id,from_district_id,to_district_id," +
-		"CASE WHEN from_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $6 AND dl.language_id = $5) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = from_district_id AND dl.language_id = $5) END as from_district, " +
-		"CASE WHEN to_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $6 AND dl.language_id = $5) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = to_district_id AND dl.language_id = $5) END as to_district, " +
-		"to_char(departure_date, 'HH24:MI') as departure_time,price,passenger_count,comments,status FROM %s WHERE departure_date::date = $1 AND departure_date::timestamp > NOW() AND from_district_id = $2 AND to_district_id = $3 AND status = $4 ORDER BY departure_date DESC LIMIT $7 OFFSET $8",ridesTable)
+	listQuery := fmt.Sprintf("SELECT id as ride_id,driver_id,from_district_id,to_district_id,"+
+		"CASE WHEN from_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $6 AND dl.language_id = $5) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = from_district_id AND dl.language_id = $5) END as from_district, "+
+		"CASE WHEN to_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $6 AND dl.language_id = $5) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = to_district_id AND dl.language_id = $5) END as to_district, "+
+		"to_char(departure_date, 'HH24:MI') as departure_time,price,passenger_count,comments,status FROM %s WHERE departure_date::date = $1 AND departure_date::timestamp > NOW() AND from_district_id = $2 AND to_district_id = $3 AND status = $4 ORDER BY departure_date DESC LIMIT $7 OFFSET $8", ridesTable)
 	err = r.db.Select(&lists, listQuery, ride.DepartureDate, ride.FromDistrictId, ride.ToDistrictId, "new", langId, viper.GetString("vars.capital_id"), limit, offset)
 	return lists, pagination, err
 }
 
-func (r *ClientOrdersPostgres) RideSingle(langId, id, userId int) (models.ClientRideList, error){
+func (r *ClientOrdersPostgres) RideSingle(langId, id, userId int) (models.ClientRideList, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return models.ClientRideList{}, err
 	}
 	var list models.ClientRideList
-	listQuery := fmt.Sprintf("SELECT id as ride_id,driver_id,from_district_id,to_district_id," +
-		"CASE WHEN from_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $2 AND dl.language_id = $1) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = from_district_id AND dl.language_id = $1) END as from_district, " +
-		"CASE WHEN to_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $2 AND dl.language_id = $1) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = to_district_id AND dl.language_id = $1) END as to_district, " +
-		"departure_date as departure_time,price,passenger_count,comments,status FROM %s WHERE id=$3",ridesTable)
+	listQuery := fmt.Sprintf("SELECT id as ride_id,driver_id,from_district_id,to_district_id,"+
+		"CASE WHEN from_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $2 AND dl.language_id = $1) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = from_district_id AND dl.language_id = $1) END as from_district, "+
+		"CASE WHEN to_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $2 AND dl.language_id = $1) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = to_district_id AND dl.language_id = $1) END as to_district, "+
+		"departure_date as departure_time,price,passenger_count,comments,status FROM %s WHERE id=$3", ridesTable)
 	err = tx.Get(&list, listQuery, langId, viper.GetString("vars.capital_id"), id)
 	if err != nil {
 		return models.ClientRideList{}, err
@@ -81,14 +82,14 @@ func (r *ClientOrdersPostgres) RideSingle(langId, id, userId int) (models.Client
 	return list, nil
 }
 
-func (r *ClientOrdersPostgres)  RideSingleStatus(rideId, userId int) (models.InterregionalOrder, error){
+func (r *ClientOrdersPostgres) RideSingleStatus(rideId, userId int) (models.InterregionalOrder, error) {
 	var list models.InterregionalOrder
-	listQuery := fmt.Sprintf("SELECT o.id,o.order_status,io.passenger_count,io.comments,o.created_at FROM %[1]s o LEFT JOIN %[2]s io ON o.order_id = io.id WHERE o.client_id=$1 AND io.ride_id=$2",ordersTable, interregionalOrdersTable)
+	listQuery := fmt.Sprintf("SELECT o.id,o.order_status,io.passenger_count,io.comments,o.created_at FROM %[1]s o LEFT JOIN %[2]s io ON o.order_id = io.id WHERE o.client_id=$1 AND io.ride_id=$2", ordersTable, interregionalOrdersTable)
 	err := r.db.Get(&list, listQuery, userId, rideId)
 	return list, err
 }
 
-func (r *ClientOrdersPostgres) RideSingleBook(bookRide models.Ride, rideId, userId int) (int, error){
+func (r *ClientOrdersPostgres) RideSingleBook(bookRide models.Ride, rideId, userId int) (int, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return 0, err
@@ -141,13 +142,13 @@ func (r *ClientOrdersPostgres) RideSingleBook(bookRide models.Ride, rideId, user
 
 type CityOrderPoint struct {
 	Address string `json:"address"`
-	Loc string `json:"loc"`
+	Loc     string `json:"loc"`
 }
-type CityOrderPoints struct{
+type CityOrderPoints struct {
 	Points []CityOrderPoint `json:"points"`
 }
 
-func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType string) ([]models.Activity, models.Pagination, error){
+func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType string) ([]models.Activity, models.Pagination, error) {
 	limit, err := strconv.Atoi(viper.GetString("vars.items_limit"))
 	if err != nil {
 		return []models.Activity{}, models.Pagination{}, err
@@ -160,20 +161,20 @@ func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType strin
 	var query string
 	var pagination models.Pagination
 	switch activityType {
-		case "active":
-			query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('new', 'driver_accepted', 'driver_arrived', 'trip_started') ORDER BY id DESC LIMIT $2 OFFSET $3", ordersTable)
-			err = r.db.Select(&lists, query, userId, limit, offset)
-			break
-		case "recently-completed":
-			query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('client_cancelled','driver_cancelled','order_completed') ORDER BY id DESC LIMIT 2", ordersTable)
-			err = r.db.Select(&lists, query, userId)
-			break
-		case "history":
-			query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('client_cancelled','driver_cancelled','order_completed') ORDER BY id DESC LIMIT $2 OFFSET $3", ordersTable)
-			err = r.db.Select(&lists, query, userId, limit, offset)
-			paginationQuery := fmt.Sprintf("SELECT count(*) AS total, $1 as current_page, CEIL(count(*)::decimal/$2) as last_page,$2 as per_page FROM %s WHERE client_id=$3 AND order_status IN('client_cancelled','driver_cancelled','order_completed')",ordersTable)
-			err = r.db.Get(&pagination, paginationQuery, page, limit, userId)
-			break
+	case "active":
+		query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('new', 'driver_accepted', 'driver_arrived', 'trip_started') ORDER BY id DESC LIMIT $2 OFFSET $3", ordersTable)
+		err = r.db.Select(&lists, query, userId, limit, offset)
+		break
+	case "recently-completed":
+		query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('client_cancelled','driver_cancelled','order_completed') ORDER BY id DESC LIMIT 2", ordersTable)
+		err = r.db.Select(&lists, query, userId)
+		break
+	case "history":
+		query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('client_cancelled','driver_cancelled','order_completed') ORDER BY id DESC LIMIT $2 OFFSET $3", ordersTable)
+		err = r.db.Select(&lists, query, userId, limit, offset)
+		paginationQuery := fmt.Sprintf("SELECT count(*) AS total, $1 as current_page, CEIL(count(*)::decimal/$2) as last_page,$2 as per_page FROM %s WHERE client_id=$3 AND order_status IN('client_cancelled','driver_cancelled','order_completed')", ordersTable)
+		err = r.db.Get(&pagination, paginationQuery, page, limit, userId)
+		break
 	}
 	for i, list := range lists {
 		if list.OrderType == orderCityType {
@@ -191,10 +192,10 @@ func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType strin
 			}
 			lists[i].From = cityOrderPoints.Points[0].Address
 			lists[i].TariffId = &cityOrder.TariffId
-			if len(cityOrderPoints.Points) > 1{
-				lists[i].To = &cityOrderPoints.Points[len(cityOrderPoints.Points) - 1].Address
+			if len(cityOrderPoints.Points) > 1 {
+				lists[i].To = &cityOrderPoints.Points[len(cityOrderPoints.Points)-1].Address
 			}
-		}else if list.OrderType == orderInterregionalType {
+		} else if list.OrderType == orderInterregionalType {
 			subQuery := fmt.Sprintf("SELECT ride_id, from_district_id, to_district_id FROM %s WHERE id=$1", interregionalOrdersTable)
 			subErr := r.db.Get(&interregionalOrder, subQuery, list.SubOrderId)
 			if subErr != nil {
@@ -210,7 +211,7 @@ func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType strin
 	return lists, pagination, err
 }
 
-func (r *ClientOrdersPostgres) RideSingleCancel(cancelRide models.CanceledOrders, rideId, orderId, userId int) error{
+func (r *ClientOrdersPostgres) RideSingleCancel(cancelRide models.CancelOrRateReasons, rideId, orderId, userId int) error {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return err
@@ -221,13 +222,25 @@ func (r *ClientOrdersPostgres) RideSingleCancel(cancelRide models.CanceledOrders
 		tx.Rollback()
 		return err
 	}
-	if cancelRide.ReasonId != nil{
+	if cancelRide.ReasonId != "" {
 		comment := ""
-		if cancelRide.Comments != nil{
+		if cancelRide.Comments != nil {
 			comment = *cancelRide.Comments
 		}
-		query := fmt.Sprintf("INSERT INTO %s (order_type, user_type,user_id,order_id,reason_id,comments) SELECT $1,$2,$3,$4,$5,$6", canceledOrdersTable)
-		_, err = tx.Exec(query, "interregional", "client", userId, orderId, *cancelRide.ReasonId, comment)
+		var cancelRideReasonId int
+		query := fmt.Sprintf("INSERT INTO %s (order_type, user_type,user_id,order_id,comments) SELECT $1,$2,$3,$4,$5 RETURNING id", canceledOrdersTable)
+		row := tx.QueryRow(query, "interregional", "client", userId, orderId, comment)
+		if err := row.Scan(&cancelRideReasonId); err != nil {
+			tx.Rollback()
+			return err
+		}
+		reasonIds := strings.Split(cancelRide.ReasonId, ",")
+		insertValues := make([]string, 0)
+		for _, reasonId := range reasonIds {
+			insertValues = append(insertValues, fmt.Sprintf("(%v,%v)", cancelRideReasonId, reasonId))
+		}
+		batchQuery := fmt.Sprintf("INSERT INTO %s (canceled_order_id,reason_id) VALUES %s", canceledOrderReasonsTable, strings.Join(insertValues, ", "))
+		_, err = tx.Exec(batchQuery)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -240,9 +253,198 @@ func (r *ClientOrdersPostgres) RideSingleCancel(cancelRide models.CanceledOrders
 	return nil
 }
 
-func (r *ClientOrdersPostgres) ChatFetch(userId, rideId,orderId int) ([]models.ChatMessages, error){
+func (r *ClientOrdersPostgres) ChatFetch(userId, rideId, orderId int) ([]models.ChatMessages, error) {
 	var lists []models.ChatMessages
 	listQuery := fmt.Sprintf("SELECT user_type,driver_id,client_id,ride_id,order_id,message_type,content,created_at FROM %s WHERE client_id=$1 AND ride_id=$2 AND order_id=$3 ORDER BY id DESC", chatMessagesTable)
 	err := r.db.Select(&lists, listQuery, userId, rideId, orderId)
 	return lists, err
+}
+
+func (r *ClientOrdersPostgres) CityTariffs(districtId, langId int) ([]models.CityTariffs, error) {
+	var lists []models.CityTariffs
+	tariffsQuery := fmt.Sprintf("SELECT t.id,rt.starting_price as start_price, rt.per_kilometer as price_per_km, rt.countryside as price_per_km_outer, rt.conditioner as ac_price, t.cars as cars, tl.name as tariff_name, tl.description as description, t.image as icon, t.additional as image, rt.expectation  FROM %s t LEFT JOIN %s tl ON t.id = tl.tariff_id LEFT JOIN %s rt ON t.id = rt.tariff_id WHERE tl.language_id=$1 AND rt.district_id=$2 ORDER BY array_position(ARRAY[8,1,2,3,13,4,5,6,7,9,10,11,12]::bigint[], t.id)", tariffsTable, tariffsLangTable, routeCityTaxiTable)
+	err := r.dash.Select(&lists, tariffsQuery, langId, districtId)
+	return lists, err
+}
+
+func (r *ClientOrdersPostgres) CityNewOrder(order models.CityOrder, userId int) (int, error) {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return 0, err
+	}
+	var cardId any
+	if order.CardId != nil {
+		cardId = *order.CardId
+	} else {
+		cardId = nil
+	}
+	var forAnotherPhone any
+	if order.ForAnotherPhone != nil {
+		forAnotherPhone = *order.ForAnotherPhone
+	} else {
+		forAnotherPhone = nil
+	}
+	var receiverComments any
+	if order.ReceiverComments != nil {
+		receiverComments = *order.ReceiverComments
+	} else {
+		receiverComments = nil
+	}
+	var receiverPhone any
+	if order.ReceiverPhone != nil {
+		receiverPhone = *order.ReceiverPhone
+	} else {
+		receiverPhone = nil
+	}
+	var comments any
+	if order.Comments != nil {
+		comments = *order.Comments
+	} else {
+		comments = nil
+	}
+	var subOrderId int
+	query := fmt.Sprintf("INSERT INTO %s (points,tariff_id,cargo_type,payment_type,card_id,has_conditioner,for_another,for_another_phone,receiver_comments,receiver_phone,price,comments) SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12 RETURNING id", cityOrdersTable)
+	row := tx.QueryRow(query, order.Points, order.TariffId, order.CargoType, order.PaymentType, cardId, order.HasConditioner, order.ForAnother, forAnotherPhone, receiverComments, receiverPhone, order.Price, comments)
+	if err := row.Scan(&subOrderId); err != nil {
+		return 0, err
+	}
+	subQuery := fmt.Sprintf("INSERT INTO %s (client_id, order_id, order_type) SELECT $1,$2,$3 RETURNING id", ordersTable)
+	var orderId int
+	subRow := tx.QueryRow(subQuery, userId, subOrderId, orderCityType)
+	if err := subRow.Scan(&orderId); err != nil {
+		return 0, err
+	}
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	return orderId, nil
+}
+
+func (r *ClientOrdersPostgres) CityOrderView(orderId, userId int) (models.CityOrder, error) {
+	var order models.Order
+	orderQuery := fmt.Sprintf("SELECT order_id,driver_id,order_status FROM %s WHERE id=$1 AND client_id=$2", ordersTable)
+	err := r.db.Get(&order, orderQuery, orderId, userId)
+	if err != nil {
+		return models.CityOrder{}, err
+	}
+	var subOrder models.CityOrder
+	subOrderQuery := fmt.Sprintf("SELECT points,tariff_id,cargo_type,payment_type,has_conditioner,for_another,for_another_phone,receiver_comments,receiver_phone,price,comments,created_at FROM %s WHERE id=$1", cityOrdersTable)
+	err = r.db.Get(&subOrder, subOrderQuery, order.OrderId)
+	if err != nil {
+		return models.CityOrder{}, err
+	}
+	subOrder.Id = orderId
+	subOrder.DriverId = order.DriverId
+	subOrder.OrderStatus = order.OrderStatus
+	return subOrder, nil
+}
+
+func (r *ClientOrdersPostgres) CityOrderChangeStatus(cancelOrRate models.CancelOrRateReasons, orderId, userId int, status string) (int, error) {
+	var ord models.Order
+	orderQuery := fmt.Sprintf("SELECT id,order_id,driver_id,order_status FROM %s WHERE id=$1", ordersTable)
+	err := r.db.Get(&ord, orderQuery, orderId)
+	if err != nil {
+		return 0, err
+	}
+	if ord.DriverId == nil && ord.OrderStatus != "new" {
+		return 0, errors.New("driver not found")
+	}
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return 0, err
+	}
+	orderStatus := ""
+	if status == "client_cancelled" {
+		orderStatus = "('new', 'driver_accepted', 'driver_arrived', 'trip_started')"
+	}
+	if status == "client_going_out" {
+		orderStatus = "('driver_arrived')"
+	}
+	if status != "client_rate" {
+		viewUpdateQuery := fmt.Sprintf("UPDATE %s SET order_status=$3 WHERE id=$1 AND client_id=$2 AND order_status IN %s", ordersTable, orderStatus)
+		res, err := tx.Exec(viewUpdateQuery, orderId, userId, status)
+		if err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+		if affected == 0 {
+			tx.Rollback()
+			return 0, errors.New("you can't change the status")
+		}
+	} else {
+		if cancelOrRate.Rate != 0 {
+			comment := ""
+			if cancelOrRate.Comments != nil {
+				comment = *cancelOrRate.Comments
+			}
+			var cancelRideReasonId int
+			query := fmt.Sprintf("INSERT INTO %s (order_type,user_type,user_id,order_id,comments,rate) SELECT $1,$2,$3,$4,$5,$6 RETURNING id", ratedOrdersTable)
+			row := tx.QueryRow(query, "city", "client", userId, orderId, comment, cancelOrRate.Rate)
+			if err := row.Scan(&cancelRideReasonId); err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+			if cancelOrRate.ReasonId != "" {
+				reasonIds := strings.Split(cancelOrRate.ReasonId, ",")
+				insertValues := make([]string, 0)
+				for _, reasonId := range reasonIds {
+					insertValues = append(insertValues, fmt.Sprintf("(%v,%v)", cancelRideReasonId, reasonId))
+				}
+				batchQuery := fmt.Sprintf("INSERT INTO %s (rated_order_id,reason_id) VALUES %s", ratedOrderReasonsTable, strings.Join(insertValues, ", "))
+				_, err = tx.Exec(batchQuery)
+				if err != nil {
+					tx.Rollback()
+					return 0, err
+				}
+			}
+		}
+	}
+	if status == "client_cancelled" {
+		if cancelOrRate.ReasonId != "" {
+			comment := ""
+			if cancelOrRate.Comments != nil {
+				comment = *cancelOrRate.Comments
+			}
+			var cancelRideReasonId int
+			query := fmt.Sprintf("INSERT INTO %s (order_type, user_type,user_id,order_id,comments) SELECT $1,$2,$3,$4,$5 RETURNING id", canceledOrdersTable)
+			row := tx.QueryRow(query, "city", "client", userId, orderId, comment)
+			if err := row.Scan(&cancelRideReasonId); err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+			reasonIds := strings.Split(cancelOrRate.ReasonId, ",")
+			insertValues := make([]string, 0)
+			for _, reasonId := range reasonIds {
+				insertValues = append(insertValues, fmt.Sprintf("(%v,%v)", cancelRideReasonId, reasonId))
+			}
+			batchQuery := fmt.Sprintf("INSERT INTO %s (canceled_order_id,reason_id) VALUES %s", canceledOrderReasonsTable, strings.Join(insertValues, ", "))
+			_, err = tx.Exec(batchQuery)
+			if err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+		}
+		if ord.DriverId != nil {
+			updateStatusQuery := fmt.Sprintf("UPDATE %s SET user_id=$1,driver_status=$2 WHERE user_id=$1", driverStatusesTable)
+			_, err = tx.Exec(updateStatusQuery, *ord.DriverId, "online")
+			if err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	if ord.DriverId == nil {
+		return 0, nil
+	}
+	return *ord.DriverId, nil
 }

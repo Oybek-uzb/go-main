@@ -22,14 +22,14 @@ const (
 )
 
 type AuthService struct {
-	repo repository.Authorization
+	repo        repository.Authorization
 	redisClient *redis.Client
 	fileStorage storage.Storage
 }
 
 type tokenClaims struct {
 	jwt.StandardClaims
-	UserId int `json:"user_id"`
+	UserId   int    `json:"user_id"`
 	UserType string `json:"user_type"`
 }
 
@@ -44,9 +44,9 @@ func (s *AuthService) CreateClient(ctx context.Context, client models.Client, us
 	}
 	if client.Avatar != nil {
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *client.Avatar,
-			Name:        fileName,
-			Folder: 	"clients",
+			File:   *client.Avatar,
+			Name:   fileName,
+			Folder: "clients",
 		})
 		if err != nil {
 			return err
@@ -59,14 +59,14 @@ func (s *AuthService) CreateClient(ctx context.Context, client models.Client, us
 func (s *AuthService) SendActivationCode(userId int, phone string) error {
 	codeMin := 10000
 	codeMax := 99999
-	code := strconv.Itoa(rand.Intn(codeMax - codeMin) + codeMin)
+	code := strconv.Itoa(rand.Intn(codeMax-codeMin) + codeMin)
 	code = strconv.Itoa(11111)
 
-	_, ok := s.redisClient.Get("update_phone"+ strconv.Itoa(userId)).Result()
+	_, ok := s.redisClient.Get("update_phone" + strconv.Itoa(userId)).Result()
 	if ok == nil {
 		return errors.New("try after a while")
 	}
-	err := s.redisClient.Set("update_phone"+strconv.Itoa(userId), code, 2 * time.Minute).Err()
+	err := s.redisClient.Set("update_phone"+strconv.Itoa(userId), code, 2*time.Minute).Err()
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func (s *AuthService) SendActivationCode(userId int, phone string) error {
 	return nil
 }
 
-func (s *AuthService) ClientUpdatePhone(userId int, phone, code string) error{
-	activationCode, err := s.redisClient.Get("update_phone"+ strconv.Itoa(userId)).Result()
+func (s *AuthService) ClientUpdatePhone(userId int, phone, code string) error {
+	activationCode, err := s.redisClient.Get("update_phone" + strconv.Itoa(userId)).Result()
 	if err != nil {
 		return err
 	}
@@ -92,29 +92,32 @@ func (s *AuthService) ClientUpdatePhone(userId int, phone, code string) error{
 	return s.repo.ClientUpdatePhone(userId, phone)
 }
 
-func (s *AuthService) GetClient(userId int) (models.Client, error)  {
+func (s *AuthService) GetClient(userId int) (models.Client, error) {
 	return s.repo.GetClient(userId)
 }
 
-func (s *AuthService) GetDriver(userId int) (models.Driver, error)  {
+func (s *AuthService) GetDriver(userId int) (models.Driver, error) {
 	return s.repo.GetDriver(userId)
 }
+func (s *AuthService) GetDriverId(userId int) (int, error) {
+	return s.repo.GetDriverId(userId)
+}
 
-func (s *AuthService) GetDriverVerification(userId int) ([]models.DriverVerification, error){
+func (s *AuthService) GetDriverVerification(userId int) ([]models.DriverVerification, error) {
 	return s.repo.GetDriverVerification(userId)
 }
 
-func (s *AuthService) GetDriverCar(userId int) (models.DriverCar, error){
+func (s *AuthService) GetDriverCar(userId int) (models.DriverCar, error) {
 	return s.repo.GetDriverCar(userId)
 }
-func (s *AuthService) GetDriverCarInfo(langId, userId int) (models.DriverCarInfo, error){
+func (s *AuthService) GetDriverCarInfo(langId, userId int) (models.DriverCarInfo, error) {
 	return s.repo.GetDriverCarInfo(langId, userId)
 }
-func (s *AuthService) GetDriverInfo(langId, driverId int) (models.Driver, models.DriverCar, models.DriverCarInfo, error){
+func (s *AuthService) GetDriverInfo(langId, driverId int) (models.Driver, models.DriverCar, models.DriverCarInfo, error) {
 	return s.repo.GetDriverInfo(langId, driverId)
 }
-func (s *AuthService) GenerateToken(login, password, userType string) (string, error)  {
-	_, err := s.redisClient.Get(userType + "_login"+login).Result()
+func (s *AuthService) GenerateToken(login, password, userType string) (string, error) {
+	_, err := s.redisClient.Get(userType + "_login" + login).Result()
 	if err != nil {
 		return "", errors.New("code expired")
 	}
@@ -125,7 +128,7 @@ func (s *AuthService) GenerateToken(login, password, userType string) (string, e
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(tokenTTL).Unix(),
-			IssuedAt: time.Now().Unix(),
+			IssuedAt:  time.Now().Unix(),
 		},
 		user.Id,
 		userType,
@@ -136,7 +139,7 @@ func (s *AuthService) GenerateToken(login, password, userType string) (string, e
 
 func (s *AuthService) ParseToken(accessToken string) (int, string, error) {
 	token, err := jwt.ParseWithClaims(accessToken, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok{
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid signing method")
 		}
 		return []byte(viper.GetString("auth.signing_key")), nil
@@ -153,14 +156,14 @@ func (s *AuthService) ParseToken(accessToken string) (int, string, error) {
 func (s *AuthService) ClientSendCode(login string) error {
 	codeMin := 10000
 	codeMax := 99999
-	code := strconv.Itoa(rand.Intn(codeMax - codeMin) + codeMin)
+	code := strconv.Itoa(rand.Intn(codeMax-codeMin) + codeMin)
 	code = strconv.Itoa(11111)
 
-	_, ok := s.redisClient.Get("client_login"+login).Result()
+	_, ok := s.redisClient.Get("client_login" + login).Result()
 	if ok == nil {
 		return errors.New("try after a while")
 	}
-	err := s.redisClient.Set("client_login"+login, code, 2 * time.Minute).Err()
+	err := s.redisClient.Set("client_login"+login, code, 2*time.Minute).Err()
 	if err != nil {
 		return err
 	}
@@ -176,7 +179,7 @@ func (s *AuthService) ClientSendCode(login string) error {
 	return s.repo.ClientSendCode(login, generatePasswordHash(code))
 }
 
-func generatePasswordHash(password string) string  {
+func generatePasswordHash(password string) string {
 	hash := sha1.New()
 	hash.Write([]byte(password))
 	return fmt.Sprintf("%x", hash.Sum([]byte(viper.GetString("auth.hash_salt"))))
@@ -185,14 +188,14 @@ func generatePasswordHash(password string) string  {
 func (s *AuthService) DriverSendCode(login string) error {
 	codeMin := 10000
 	codeMax := 99999
-	code := strconv.Itoa(rand.Intn(codeMax - codeMin) + codeMin)
+	code := strconv.Itoa(rand.Intn(codeMax-codeMin) + codeMin)
 	code = strconv.Itoa(11111)
 
-	_, ok := s.redisClient.Get("driver_login"+login).Result()
+	_, ok := s.redisClient.Get("driver_login" + login).Result()
 	if ok == nil {
 		return errors.New("try after a while")
 	}
-	err := s.redisClient.Set("driver_login"+login, code, 2 * time.Minute).Err()
+	err := s.redisClient.Set("driver_login"+login, code, 2*time.Minute).Err()
 	if err != nil {
 		return err
 	}
@@ -215,9 +218,9 @@ func (s *AuthService) CreateDriver(ctx context.Context, driver models.Driver, us
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *driver.Photo,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *driver.Photo,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -237,9 +240,9 @@ func (s *AuthService) UpdateDriver(ctx context.Context, driver models.Driver, us
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *driver.Photo,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *driver.Photo,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -252,9 +255,9 @@ func (s *AuthService) UpdateDriver(ctx context.Context, driver models.Driver, us
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *driver.PassportCopy1,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *driver.PassportCopy1,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -267,9 +270,9 @@ func (s *AuthService) UpdateDriver(ctx context.Context, driver models.Driver, us
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *driver.PassportCopy2,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *driver.PassportCopy2,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -282,9 +285,9 @@ func (s *AuthService) UpdateDriver(ctx context.Context, driver models.Driver, us
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *driver.PassportCopy3,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *driver.PassportCopy3,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -297,9 +300,9 @@ func (s *AuthService) UpdateDriver(ctx context.Context, driver models.Driver, us
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *driver.DriverLicensePhoto1,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *driver.DriverLicensePhoto1,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -312,9 +315,9 @@ func (s *AuthService) UpdateDriver(ctx context.Context, driver models.Driver, us
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *driver.DriverLicensePhoto2,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *driver.DriverLicensePhoto2,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -327,9 +330,9 @@ func (s *AuthService) UpdateDriver(ctx context.Context, driver models.Driver, us
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *driver.DriverLicensePhoto3,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *driver.DriverLicensePhoto3,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -339,16 +342,16 @@ func (s *AuthService) UpdateDriver(ctx context.Context, driver models.Driver, us
 	return s.repo.UpdateDriver(driver, userId)
 }
 
-func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, userId int) error{
+func (s *AuthService) UpdateDriverCar(ctx context.Context, car models.DriverCar, userId int) error {
 	if car.PhotoTexpasport1 != nil && *car.PhotoTexpasport1 != "" {
 		fileName, err := utils.GenerateFileName()
 		if err != nil {
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.PhotoTexpasport1,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.PhotoTexpasport1,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -361,9 +364,9 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, 
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.PhotoTexpasport2,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.PhotoTexpasport2,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -376,9 +379,9 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, 
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.CarFront,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.CarFront,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -391,9 +394,9 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, 
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.CarBack,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.CarBack,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -406,9 +409,9 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, 
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.CarLeft,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.CarLeft,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -421,9 +424,9 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, 
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.CarRight,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.CarRight,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -436,9 +439,9 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, 
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.CarFrontRow,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.CarFrontRow,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -451,9 +454,9 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, 
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.CarFrontBack,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.CarFrontBack,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err
@@ -466,9 +469,9 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context,car models.DriverCar, 
 			return err
 		}
 		uploadedFileName, err := s.fileStorage.Upload(ctx, storage.UploadInput{
-			File:        *car.CarBaggage,
-			Name:        fileName,
-			Folder: 	"drivers",
+			File:   *car.CarBaggage,
+			Name:   fileName,
+			Folder: "drivers",
 		})
 		if err != nil {
 			return err

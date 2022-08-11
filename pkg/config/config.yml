@@ -32,3 +32,8 @@ storage:
 vars:
   capital_id: 14
   items_limit: 10
+
+services:
+  geo: "http://62.109.23.60:3000"
+  socket: "http://62.109.23.60:3100"
+  dash: "http://62.109.23.60:8000"

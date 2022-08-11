@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (h *Handler) clientSignUp(c *gin.Context)  {
+func (h *Handler) clientSignUp(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -24,9 +24,14 @@ func (h *Handler) clientSignUp(c *gin.Context)  {
 		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-	err = h.services.Authorization.CreateClient(c.Request.Context(),input,userId)
+	err = h.services.Authorization.CreateClient(c.Request.Context(), input, userId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	client, err := h.services.GetClient(userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, "client not found")
 		return
 	}
 	//client, err := h.services.GetClient(userId)
@@ -34,10 +39,10 @@ func (h *Handler) clientSignUp(c *gin.Context)  {
 	//	newErrorResponse(c, http.StatusInternalServerError, err.Error())
 	//	return
 	//}
-	newSuccessResponse(c, http.StatusOK, "ok")
+	newSuccessResponse(c, http.StatusOK, client)
 }
 
-func (h *Handler) clientUpdate(c *gin.Context)  {
+func (h *Handler) clientUpdate(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -54,7 +59,7 @@ func (h *Handler) clientUpdate(c *gin.Context)  {
 		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-	err = h.services.Authorization.CreateClient(c.Request.Context(),input,userId)
+	err = h.services.Authorization.CreateClient(c.Request.Context(), input, userId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -66,10 +71,12 @@ func (h *Handler) clientUpdate(c *gin.Context)  {
 	//}
 	newSuccessResponse(c, http.StatusOK, "ok")
 }
+
 type UpdatePhoneSendCodeInput struct {
 	Phone string `json:"phone" form:"phone" binding:"required"`
 }
-func (h *Handler) clientUpdatePhoneSendCode(c *gin.Context){
+
+func (h *Handler) clientUpdatePhoneSendCode(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -99,11 +106,13 @@ func (h *Handler) clientUpdatePhoneSendCode(c *gin.Context){
 		"phone": input.Phone,
 	})
 }
+
 type UpdatePhoneInput struct {
 	Phone string `json:"phone" form:"phone" binding:"required"`
-	Code string `json:"code" form:"code" binding:"required"`
+	Code  string `json:"code" form:"code" binding:"required"`
 }
-func (h *Handler) clientUpdatePhone(c *gin.Context){
+
+func (h *Handler) clientUpdatePhone(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -123,7 +132,7 @@ func (h *Handler) clientUpdatePhone(c *gin.Context){
 	newSuccessResponse(c, http.StatusOK, "ok")
 }
 
-func (h *Handler) clientGetMe(c *gin.Context)  {
+func (h *Handler) clientGetMe(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -136,7 +145,7 @@ func (h *Handler) clientGetMe(c *gin.Context)  {
 	}
 	newSuccessResponse(c, http.StatusOK, client)
 }
-func (h *Handler) driverGetMe(c *gin.Context)  {
+func (h *Handler) driverGetMe(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -149,7 +158,7 @@ func (h *Handler) driverGetMe(c *gin.Context)  {
 	}
 	newSuccessResponse(c, http.StatusOK, driver)
 }
-func (h *Handler) driverVerification(c *gin.Context)  {
+func (h *Handler) driverVerification(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -162,11 +171,13 @@ func (h *Handler) driverVerification(c *gin.Context)  {
 	}
 	newSuccessResponse(c, http.StatusOK, verification)
 }
+
 type signInInput struct {
-	Login string `json:"login" form:"login" binding:"required"`
+	Login    string `json:"login" form:"login" binding:"required"`
 	Password string `json:"password" form:"password" binding:"required"`
 }
-func (h *Handler) clientSignIn(c *gin.Context)  {
+
+func (h *Handler) clientSignIn(c *gin.Context) {
 	var input signInInput
 
 	if err := c.Bind(&input); err != nil {
@@ -185,11 +196,12 @@ func (h *Handler) clientSignIn(c *gin.Context)  {
 	}
 	client, err := h.services.GetClient(userId)
 	c.JSON(http.StatusOK, map[string]interface{}{
-		"token": token,
+		"token":      token,
 		"registered": client.Id != 0,
+		"client":     client,
 	})
 }
-func (h *Handler) driverSignIn(c *gin.Context)  {
+func (h *Handler) driverSignIn(c *gin.Context) {
 	var input signInInput
 
 	if err := c.Bind(&input); err != nil {
@@ -208,7 +220,7 @@ func (h *Handler) driverSignIn(c *gin.Context)  {
 	}
 	driver, err := h.services.GetDriver(userId)
 	c.JSON(http.StatusOK, map[string]interface{}{
-		"token": token,
+		"token":      token,
 		"registered": driver.Id != 0,
 	})
 }
@@ -216,7 +228,8 @@ func (h *Handler) driverSignIn(c *gin.Context)  {
 type sendCodeInput struct {
 	Login string `form:"login" json:"login" binding:"required"`
 }
-func (h *Handler) clientSendCode(c *gin.Context)  {
+
+func (h *Handler) clientSendCode(c *gin.Context) {
 	var input sendCodeInput
 
 	if err := c.Bind(&input); err != nil {
@@ -231,7 +244,7 @@ func (h *Handler) clientSendCode(c *gin.Context)  {
 	newSuccessResponse(c, http.StatusOK, "Code successfully sent")
 }
 
-func (h *Handler) driverSendCode(c *gin.Context)  {
+func (h *Handler) driverSendCode(c *gin.Context) {
 	var input sendCodeInput
 	if err := c.Bind(&input); err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -245,8 +258,7 @@ func (h *Handler) driverSendCode(c *gin.Context)  {
 	newSuccessResponse(c, http.StatusOK, "Code successfully sent")
 }
 
-
-func (h *Handler) driverSignUp(c *gin.Context)  {
+func (h *Handler) driverSignUp(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -262,7 +274,7 @@ func (h *Handler) driverSignUp(c *gin.Context)  {
 		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-	err = h.services.Authorization.CreateDriver(c.Request.Context(),input,userId)
+	err = h.services.Authorization.CreateDriver(c.Request.Context(), input, userId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -275,7 +287,7 @@ func (h *Handler) driverSignUp(c *gin.Context)  {
 	newSuccessResponse(c, http.StatusOK, "ok")
 }
 
-func (h *Handler) driverSignUpSendForModerating(c *gin.Context){
+func (h *Handler) driverSignUpSendForModerating(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -289,7 +301,7 @@ func (h *Handler) driverSignUpSendForModerating(c *gin.Context){
 	newSuccessResponse(c, http.StatusOK, "ok")
 }
 
-func (h *Handler) driverUpdate(c *gin.Context)  {
+func (h *Handler) driverUpdate(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -306,14 +318,14 @@ func (h *Handler) driverUpdate(c *gin.Context)  {
 		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-	err = h.services.Authorization.UpdateDriver(c.Request.Context(),input,userId)
+	err = h.services.Authorization.UpdateDriver(c.Request.Context(), input, userId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	newSuccessResponse(c, http.StatusOK, "ok")
 }
-func (h *Handler) driverCarUpdate(c *gin.Context)  {
+func (h *Handler) driverCarUpdate(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -325,14 +337,14 @@ func (h *Handler) driverCarUpdate(c *gin.Context)  {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = h.services.Authorization.UpdateDriverCar(c.Request.Context(),input,userId)
+	err = h.services.Authorization.UpdateDriverCar(c.Request.Context(), input, userId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	newSuccessResponse(c, http.StatusOK, "ok")
 }
-func (h *Handler) driverCarFetch(c *gin.Context)  {
+func (h *Handler) driverCarFetch(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())

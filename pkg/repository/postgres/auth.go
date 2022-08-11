@@ -11,7 +11,7 @@ import (
 )
 
 type AuthPostgres struct {
-	db *sqlx.DB
+	db   *sqlx.DB
 	dash *sqlx.DB
 }
 
@@ -44,7 +44,7 @@ func (r *AuthPostgres) CreateClient(user models.Client, userId int) error {
 			tx.Rollback()
 			return err
 		}
-	}else{
+	} else {
 		setValues := make([]string, 0)
 		args := make([]interface{}, 0)
 		argId := 1
@@ -72,7 +72,7 @@ func (r *AuthPostgres) CreateClient(user models.Client, userId int) error {
 			setValues = append(setValues, fmt.Sprintf("avatar=$%d", argId))
 			if *user.Avatar != "" {
 				args = append(args, user.Avatar)
-			}else{
+			} else {
 				args = append(args, nil)
 			}
 			argId++
@@ -90,20 +90,20 @@ func (r *AuthPostgres) CreateClient(user models.Client, userId int) error {
 
 	return tx.Commit()
 }
-func (r *AuthPostgres) ClientCheckPhone(phone string) error{
+func (r *AuthPostgres) ClientCheckPhone(phone string) error {
 	query := fmt.Sprintf("SELECT id FROM %s WHERE login=$1 AND user_type=$2", usersTable)
 	var usr models.User
 	err := r.db.Get(&usr, query, phone, clientType)
-	if usr.Id == 0{
+	if usr.Id == 0 {
 		return nil
-	}else{
+	} else {
 		if err != nil && err != sql.ErrNoRows {
 			return err
 		}
 		return errors.New("client with this number already exists")
 	}
 }
-func (r *AuthPostgres) ClientUpdatePhone(userId int, phone string) error{
+func (r *AuthPostgres) ClientUpdatePhone(userId int, phone string) error {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return err
@@ -111,7 +111,7 @@ func (r *AuthPostgres) ClientUpdatePhone(userId int, phone string) error{
 	var usr models.User
 	usrQuery := fmt.Sprintf("SELECT u.client_id FROM %s u INNER JOIN %s c ON c.id = u.client_id WHERE u.id=$1", usersTable, clientsTable)
 	err = tx.Get(&usr, usrQuery, userId)
-	if err != nil{
+	if err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -154,14 +154,14 @@ func (r *AuthPostgres) CreateOrUpdateClient(user models.User) (int, error) {
 	return id, tx.Commit()
 }
 
-func (r *AuthPostgres) GetUser(login, password, userType string) (models.User, error){
+func (r *AuthPostgres) GetUser(login, password, userType string) (models.User, error) {
 	var user models.User
 	query := fmt.Sprintf("SELECT id FROM %s WHERE login=$1 AND password_hash=$2 AND user_type=$3", usersTable)
 	err := r.db.Get(&user, query, login, password, userType)
 	return user, err
 }
 
-func (r *AuthPostgres) GetClient(userId int) (models.Client, error){
+func (r *AuthPostgres) GetClient(userId int) (models.Client, error) {
 	var usr models.User
 	usrQuery := fmt.Sprintf("SELECT client_id, login FROM %s WHERE id=$1", usersTable)
 	err := r.db.Get(&usr, usrQuery, userId)
@@ -177,13 +177,14 @@ func (r *AuthPostgres) GetClient(userId int) (models.Client, error){
 	if err != nil {
 		return models.Client{}, err
 	}
+	client.Id = userId
 	client.Phone = &usr.Login
 	if client.Avatar != nil {
 		client.Avatar = utils.GetFileUrl(strings.Split(*client.Avatar, "/"))
 	}
 	return client, nil
 }
-func (r *AuthPostgres) GetDriverVerification(userId int) ([]models.DriverVerification, error){
+func (r *AuthPostgres) GetDriverVerification(userId int) ([]models.DriverVerification, error) {
 	var usr models.User
 	usrQuery := fmt.Sprintf("SELECT driver_id FROM %s WHERE id=$1", usersTable)
 	err := r.db.Get(&usr, usrQuery, userId)
@@ -198,7 +199,19 @@ func (r *AuthPostgres) GetDriverVerification(userId int) ([]models.DriverVerific
 	err = r.dash.Select(&verification, verificationQuery, *usr.DriverId)
 	return verification, err
 }
-func (r *AuthPostgres) GetDriver(userId int) (models.Driver, error){
+func (r *AuthPostgres) GetDriverId(userId int) (int, error) {
+	var usr models.User
+	usrQuery := fmt.Sprintf("SELECT driver_id FROM %s WHERE id=$1", usersTable)
+	err := r.db.Get(&usr, usrQuery, userId)
+	if err != nil {
+		return 0, err
+	}
+	if usr.DriverId == nil {
+		return 0, errors.New("driver not found")
+	}
+	return *usr.DriverId, nil
+}
+func (r *AuthPostgres) GetDriver(userId int) (models.Driver, error) {
 	var usr models.User
 	usrQuery := fmt.Sprintf("SELECT driver_id FROM %s WHERE id=$1", usersTable)
 	err := r.db.Get(&usr, usrQuery, userId)
@@ -213,6 +226,16 @@ func (r *AuthPostgres) GetDriver(userId int) (models.Driver, error){
 	err = r.dash.Get(&driver, driverQuery, *usr.DriverId)
 	if err != nil {
 		return models.Driver{}, err
+	}
+	driver.Id = userId
+	var newDriver models.Driver
+	newDriverQuery := fmt.Sprintf("SELECT driver_status as status FROM %s WHERE user_id=$1", driverStatusesTable)
+	err = r.db.Get(&newDriver, newDriverQuery, userId)
+	if err != nil && err != sql.ErrNoRows {
+		return models.Driver{}, err
+	}
+	if newDriver.Status != nil && err != sql.ErrNoRows {
+		driver.Status = newDriver.Status
 	}
 	if driver.Photo != nil {
 		driver.Photo = utils.GetFileUrl(strings.Split(*driver.Photo, "/"))
@@ -238,7 +261,7 @@ func (r *AuthPostgres) GetDriver(userId int) (models.Driver, error){
 	return driver, nil
 }
 
-func (r *AuthPostgres) GetDriverCar(userId int) (models.DriverCar, error){
+func (r *AuthPostgres) GetDriverCar(userId int) (models.DriverCar, error) {
 	var usr models.User
 	usrQuery := fmt.Sprintf("SELECT driver_id FROM %s WHERE id=$1", usersTable)
 	err := r.db.Get(&usr, usrQuery, userId)
@@ -251,31 +274,31 @@ func (r *AuthPostgres) GetDriverCar(userId int) (models.DriverCar, error){
 	if err != nil {
 		return models.DriverCar{}, err
 	}
-	if car.PhotoTexpasport1 != nil{
+	if car.PhotoTexpasport1 != nil {
 		car.PhotoTexpasport1 = utils.GetFileUrl(strings.Split(*car.PhotoTexpasport1, "/"))
 	}
-	if car.PhotoTexpasport2 != nil{
+	if car.PhotoTexpasport2 != nil {
 		car.PhotoTexpasport2 = utils.GetFileUrl(strings.Split(*car.PhotoTexpasport2, "/"))
 	}
-	if car.CarFront != nil{
+	if car.CarFront != nil {
 		car.CarFront = utils.GetFileUrl(strings.Split(*car.CarFront, "/"))
 	}
-	if car.CarLeft != nil{
+	if car.CarLeft != nil {
 		car.CarLeft = utils.GetFileUrl(strings.Split(*car.CarLeft, "/"))
 	}
-	if car.CarRight != nil{
+	if car.CarRight != nil {
 		car.CarRight = utils.GetFileUrl(strings.Split(*car.CarRight, "/"))
 	}
-	if car.CarBack != nil{
+	if car.CarBack != nil {
 		car.CarBack = utils.GetFileUrl(strings.Split(*car.CarBack, "/"))
 	}
-	if car.CarFrontRow != nil{
+	if car.CarFrontRow != nil {
 		car.CarFrontRow = utils.GetFileUrl(strings.Split(*car.CarFrontRow, "/"))
 	}
-	if car.CarFrontBack != nil{
+	if car.CarFrontBack != nil {
 		car.CarFrontBack = utils.GetFileUrl(strings.Split(*car.CarFrontBack, "/"))
 	}
-	if car.CarBaggage != nil{
+	if car.CarBaggage != nil {
 		car.CarBaggage = utils.GetFileUrl(strings.Split(*car.CarBaggage, "/"))
 	}
 	return car, nil
@@ -313,9 +336,9 @@ func (r *AuthPostgres) CreateDriver(user models.Driver, userId int) error {
 	drvQuery := fmt.Sprintf("SELECT id FROM %s WHERE id=$1", driverTable)
 	var drvErr error
 	if usr.DriverId == nil {
-		drvErr = tx1.Get(&drv, drvQuery,  usr.DriverId)
-	}else{
-		drvErr = tx1.Get(&drv, drvQuery,  *usr.DriverId)
+		drvErr = tx1.Get(&drv, drvQuery, usr.DriverId)
+	} else {
+		drvErr = tx1.Get(&drv, drvQuery, *usr.DriverId)
 	}
 
 	if drvErr != nil && drvErr != sql.ErrNoRows {
@@ -346,7 +369,7 @@ func (r *AuthPostgres) CreateDriver(user models.Driver, userId int) error {
 			tx1.Rollback()
 			return err
 		}
-	}else{
+	} else {
 		setValues := make([]string, 0)
 		args := make([]interface{}, 0)
 		argId := 1
@@ -379,7 +402,7 @@ func (r *AuthPostgres) CreateDriver(user models.Driver, userId int) error {
 			setValues = append(setValues, fmt.Sprintf("photo=$%d", argId))
 			if *user.Photo != "" {
 				args = append(args, user.Photo)
-			}else{
+			} else {
 				args = append(args, nil)
 			}
 			argId++
@@ -442,7 +465,7 @@ func (r *AuthPostgres) SendForModerating(userId int) error {
 		return err
 	}
 	userQuery := fmt.Sprintf("UPDATE %s SET status=$1 WHERE id=$2", driverTable)
-	_, err = r.dash.Exec(userQuery,"send_for_moderating", usr.DriverId)
+	_, err = r.dash.Exec(userQuery, "send_for_moderating", usr.DriverId)
 	return err
 }
 func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
@@ -504,7 +527,7 @@ func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
 		setValues = append(setValues, fmt.Sprintf("photo=$%d", argId))
 		if *user.Photo != "" {
 			args = append(args, user.Photo)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -513,7 +536,7 @@ func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
 		setValues = append(setValues, fmt.Sprintf("passport_copy1=$%d", argId))
 		if *user.PassportCopy1 != "" {
 			args = append(args, user.PassportCopy1)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -522,7 +545,7 @@ func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
 		setValues = append(setValues, fmt.Sprintf("passport_copy2=$%d", argId))
 		if *user.PassportCopy2 != "" {
 			args = append(args, user.PassportCopy2)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -531,7 +554,7 @@ func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
 		setValues = append(setValues, fmt.Sprintf("passport_copy3=$%d", argId))
 		if *user.PassportCopy3 != "" {
 			args = append(args, user.PassportCopy3)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -540,7 +563,7 @@ func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
 		setValues = append(setValues, fmt.Sprintf("driver_license_photo1=$%d", argId))
 		if *user.DriverLicensePhoto1 != "" {
 			args = append(args, user.DriverLicensePhoto1)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -549,7 +572,7 @@ func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
 		setValues = append(setValues, fmt.Sprintf("driver_license_photo2=$%d", argId))
 		if *user.DriverLicensePhoto2 != "" {
 			args = append(args, user.DriverLicensePhoto2)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -558,7 +581,7 @@ func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
 		setValues = append(setValues, fmt.Sprintf("driver_license_photo3=$%d", argId))
 		if *user.DriverLicensePhoto3 != "" {
 			args = append(args, user.DriverLicensePhoto3)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -575,7 +598,7 @@ func (r *AuthPostgres) UpdateDriver(user models.Driver, userId int) error {
 	return tx.Commit()
 }
 
-func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
+func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error {
 	tx, err := r.dash.Beginx()
 	if err != nil {
 		return err
@@ -629,7 +652,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("photo_texpasport1=$%d", argId))
 		if *car.PhotoTexpasport1 != "" {
 			args = append(args, car.PhotoTexpasport1)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -638,7 +661,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("photo_texpasport2=$%d", argId))
 		if *car.PhotoTexpasport2 != "" {
 			args = append(args, car.PhotoTexpasport2)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -647,7 +670,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("car_front=$%d", argId))
 		if *car.CarFront != "" {
 			args = append(args, car.CarFront)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -656,7 +679,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("car_back=$%d", argId))
 		if *car.CarBack != "" {
 			args = append(args, car.CarBack)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -665,7 +688,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("car_left=$%d", argId))
 		if *car.CarLeft != "" {
 			args = append(args, car.CarLeft)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -674,7 +697,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("car_right=$%d", argId))
 		if *car.CarRight != "" {
 			args = append(args, car.CarRight)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -683,7 +706,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("car_front_row=$%d", argId))
 		if *car.CarFrontRow != "" {
 			args = append(args, car.CarFrontRow)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -692,7 +715,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("car_front_back=$%d", argId))
 		if *car.CarFrontBack != "" {
 			args = append(args, car.CarFrontBack)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -701,7 +724,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 		setValues = append(setValues, fmt.Sprintf("car_baggage=$%d", argId))
 		if *car.CarBaggage != "" {
 			args = append(args, car.CarBaggage)
-		}else{
+		} else {
 			args = append(args, nil)
 		}
 		argId++
@@ -718,8 +741,7 @@ func (r *AuthPostgres) UpdateDriverCar(car models.DriverCar, userId int) error{
 	return tx.Commit()
 }
 
-
-func (r *AuthPostgres) GetDriverCarInfo(langId, userId int) (models.DriverCarInfo, error){
+func (r *AuthPostgres) GetDriverCarInfo(langId, userId int) (models.DriverCarInfo, error) {
 	var usr models.User
 	usrQuery := fmt.Sprintf("SELECT driver_id FROM %s WHERE id=$1", usersTable)
 	err := r.db.Get(&usr, usrQuery, userId)
@@ -735,7 +757,7 @@ func (r *AuthPostgres) GetDriverCarInfo(langId, userId int) (models.DriverCarInf
 	return car, nil
 }
 
-func (r *AuthPostgres) GetDriverInfo(langId, driverId int) (models.Driver, models.DriverCar, models.DriverCarInfo, error){
+func (r *AuthPostgres) GetDriverInfo(langId, driverId int) (models.Driver, models.DriverCar, models.DriverCarInfo, error) {
 	var usr models.User
 	usrQuery := fmt.Sprintf("SELECT driver_id FROM %s WHERE id=$1", usersTable)
 	err := r.db.Get(&usr, usrQuery, driverId)

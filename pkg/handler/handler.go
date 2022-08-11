@@ -13,7 +13,7 @@ func NewHandler(services *service.Service) *Handler {
 	return &Handler{services: services}
 }
 
-func (h *Handler) InitRoutes() *gin.Engine{
+func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 	router.Use(JSONMiddleware())
 	api := router.Group("/api/v1", h.language)
@@ -71,6 +71,18 @@ func (h *Handler) InitRoutes() *gin.Engine{
 						ride.POST("/:id/cancel/:order_id", h.clientOrdersRideSingleCancel)
 					}
 				}
+				city := protected.Group("/city")
+				{
+					city.POST("/new-order", h.clientCityOrder)
+					city.POST("/tariffs", h.clientCityTariffs)
+					order := city.Group("/order")
+					{
+						order.GET("/:id", h.clientCityOrderView)
+						order.POST("/:id/cancel", h.clientCityOrderCancel)
+						order.POST("/:id/going-out", h.clientCityOrderGoingOut)
+						order.POST("/:id/rate", h.clientCityOrderRate)
+					}
+				}
 			}
 		}
 		driver := api.Group("/driver")
@@ -97,7 +109,11 @@ func (h *Handler) InitRoutes() *gin.Engine{
 				}
 				settingsProtected := protected.Group("/settings")
 				{
+					settingsProtected.POST("/set-online", h.driverCitySetOnline)
 					settingsProtected.GET("/tariffs", h.driverCityTariffs)
+					settingsProtected.POST("/tariffs/enable", h.driverCityTariffsEnable)
+					settingsProtected.GET("/stats", h.driverStats)
+					settingsProtected.GET("/stats/orders", h.driverStatOrders)
 				}
 				chat := protected.Group("/chat")
 				{
@@ -123,6 +139,17 @@ func (h *Handler) InitRoutes() *gin.Engine{
 						ride.POST("/:id/complete", h.driverOrdersCompleteRide)
 						ride.POST("/:id/cancel", h.driverOrdersCancelRide)
 					}
+					orders.POST("/calculate-price", h.driverOrdersCalculatePrice)
+					city := orders.Group("/city")
+					{
+						city.GET("/:id", h.driverCityOrderView)
+						city.POST("/:id/skip", h.driverCityOrderSkip)
+						city.POST("/:id/accept", h.driverCityOrderAccept)
+						city.POST("/:id/arrived", h.driverCityOrderArrived)
+						city.POST("/:id/start", h.driverCityOrderStart)
+						city.POST("/:id/done", h.driverCityOrderDone)
+						city.POST("/:id/cancel", h.driverCityOrderCancel)
+					}
 				}
 			}
 		}
@@ -136,6 +163,7 @@ func (h *Handler) InitRoutes() *gin.Engine{
 				utilsProtected.GET("/test", h.test)
 				utilsProtected.GET("/regions", h.utilsRegion)
 				utilsProtected.GET("/regions/:id", h.utilsDistrict)
+				utilsProtected.GET("/client-rate-options", h.utilsClientRateOptions)
 				utilsProtected.GET("/driver-cancel-order-options", h.utilsDriverCancelOrderOptions)
 				utilsProtected.GET("/client-cancel-order-options", h.utilsClientCancelOrderOptions)
 			}

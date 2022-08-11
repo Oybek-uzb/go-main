@@ -13,6 +13,14 @@ func NewDriverSettingsService(repo repository.DriverSettings) *DriverSettingsSer
 	return &DriverSettingsService{repo: repo}
 }
 
-func (s *DriverSettingsService) GetTariffs(userId, langId int) ([]models.DriverTariffs, error){
+func (s *DriverSettingsService) GetTariffs(userId, langId int) ([]models.DriverTariffs, error) {
 	return s.repo.GetTariffs(userId, langId)
+}
+
+func (s *DriverSettingsService) TariffsEnable(userId, tariffId int, isActive bool) error {
+	return s.repo.TariffsEnable(userId, tariffId, isActive)
+}
+
+func (s *DriverSettingsService) SetOnline(userId int, isActive int) error {
+	return s.repo.SetOnline(userId, isActive)
 }

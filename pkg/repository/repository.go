@@ -22,6 +22,7 @@ type Authorization interface {
 	DriverSendCode(login, password string) error
 	CreateOrUpdateDriver(user models.User) (int, error)
 	GetDriver(userId int) (models.Driver, error)
+	GetDriverId(userId int) (int, error)
 	GetDriverVerification(userId int) ([]models.DriverVerification, error)
 	GetDriverCar(userId int) (models.DriverCar, error)
 	GetDriverCarInfo(langId, userId int) (models.DriverCarInfo, error)
@@ -35,9 +36,10 @@ type Utils interface {
 	GetRegions(langId int) ([]models.Region, error)
 	GetDistricts(langId int, id int) ([]models.District, error)
 	GetDistrictsArr(langId int) (map[int]string, error)
-	GetTariffs(langId int) (map[int]string, error)
+	GetTariffs(langId int) (map[string]string, error)
 	DriverCancelOrderOptions(langId int) ([]models.DriverCancelOrderOptions, error)
 	ClientCancelOrderOptions(langId int, optionType string) ([]models.ClientCancelOrderOptions, error)
+	ClientRateOptions(langId, rate int, optionType string) ([]models.ClientRateOptions, error)
 }
 
 type SavedAddresses interface {
@@ -67,7 +69,11 @@ type DriverOrders interface {
 	RideSingleOrderView(orderId int) (models.InterregionalOrder, error)
 	RideSingleOrderAccept(driverId, orderId int) error
 	RideSingleOrderCancel(driverId, orderId int) error
-	ChatFetch(userId, rideId,orderId int) ([]models.ChatMessages, error)
+	ChatFetch(userId, rideId, orderId int) ([]models.ChatMessages, error)
+	CityOrderView(orderId, userId int) (models.CityOrder, error)
+	CityOrderChangeStatus(req models.CityOrderRequest, cancelOrRate models.CancelOrRateReasons, orderId, userId int, status string) (int, error)
+	CityTariff(districtId, tariffId int) (models.CityTariffs, error)
+	CityTariffInfo(districtId, tariffId int) (models.TariffInfo, error)
 }
 
 type ClientOrders interface {
@@ -76,12 +82,18 @@ type ClientOrders interface {
 	RideSingleBook(bookRide models.Ride, rideId, userId int) (int, error)
 	RideSingleStatus(rideId, userId int) (models.InterregionalOrder, error)
 	Activity(userId int, page int, activityType string) ([]models.Activity, models.Pagination, error)
-	ChatFetch(userId, rideId,orderId int) ([]models.ChatMessages, error)
-	RideSingleCancel(cancelRide models.CanceledOrders, rideId, orderId, userId int) error
+	ChatFetch(userId, rideId, orderId int) ([]models.ChatMessages, error)
+	RideSingleCancel(cancelRide models.CancelOrRateReasons, rideId, orderId, userId int) error
+	CityTariffs(districtId, langId int) ([]models.CityTariffs, error)
+	CityNewOrder(order models.CityOrder, userId int) (int, error)
+	CityOrderView(orderId, userId int) (models.CityOrder, error)
+	CityOrderChangeStatus(cancelOrRate models.CancelOrRateReasons, orderId, userId int, status string) (int, error)
 }
 
 type DriverSettings interface {
 	GetTariffs(userId, langId int) ([]models.DriverTariffs, error)
+	TariffsEnable(userId, tariffId int, isActive bool) error
+	SetOnline(userId int, isActive int) error
 }
 
 type Repository struct {
@@ -94,15 +106,14 @@ type Repository struct {
 	DriverSettings
 }
 
-
 func NewRepository(dashboard *sqlx.DB, public *sqlx.DB) *Repository {
 	return &Repository{
-		Authorization: postgres.NewAuthPostgres(public, dashboard),
-		Utils: postgres.NewUtilsPostgres(public, dashboard),
+		Authorization:  postgres.NewAuthPostgres(public, dashboard),
+		Utils:          postgres.NewUtilsPostgres(public, dashboard),
 		SavedAddresses: postgres.NewSavedAddressesPostgres(public),
-		CreditCards: postgres.NewCreditCardsPostgres(public),
-		DriverOrders: postgres.NewDriverOrdersPostgres(public),
-		ClientOrders: postgres.NewClientOrdersPostgres(public),
+		CreditCards:    postgres.NewCreditCardsPostgres(public),
+		DriverOrders:   postgres.NewDriverOrdersPostgres(public, dashboard),
+		ClientOrders:   postgres.NewClientOrdersPostgres(public, dashboard),
 		DriverSettings: postgres.NewDriverSettingsPostgres(public, dashboard),
 	}
 }
