@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"strconv"
+	"strings"
 )
 
 type UtilsPostgres struct {
@@ -86,7 +87,18 @@ func (r *UtilsPostgres) ClientCancelOrderOptions(langId int, optionType string) 
 
 func (r *UtilsPostgres) ClientRateOptions(langId, rate int, optionType string) ([]models.ClientRateOptions, error) {
 	var lists []models.ClientRateOptions
-	query := fmt.Sprintf("SELECT o.id, COALESCE(ol.options, o.options) as options, type FROM %s o LEFT JOIN %s ol on o.id = ol.driver_assessment_id WHERE ol.language_id = $1 AND o.type = $2 AND o.rating = $3", clientRateOptionsTable, clientRateOptionsLangTable)
+	query := fmt.Sprintf("SELECT o.id, o.icon, COALESCE(ol.options, o.options) as options, type "+
+		"FROM %s o LEFT JOIN %s ol on o.id = ol.driver_assessment_id "+
+		"WHERE ol.language_id = $1 AND o.type = $2 AND o.rating = $3",
+		clientRateOptionsTable,
+		clientRateOptionsLangTable)
 	err := r.dash.Select(&lists, query, langId, optionType, rate)
+
+	for i, list := range lists {
+		if list.Icon != nil {
+			lists[i].Icon = utils.GetFileUrl(strings.Split(*list.Icon, "/"))
+		}
+	}
+
 	return lists, err
 }
