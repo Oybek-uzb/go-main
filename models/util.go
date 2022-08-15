@@ -86,8 +86,9 @@ type ClientCancelOrderOptions struct {
 	Type    string `json:"type"`
 }
 type ClientRateOptions struct {
-	Id      int    `json:"id" db:"id"`
-	Rate    int    `json:"rate" db:"rating"`
-	Options string `json:"options"`
-	Type    string `json:"type"`
+	Id      int     `json:"id" db:"id"`
+	Rate    int     `json:"rate" db:"rating"`
+	Options string  `json:"options"`
+	Type    string  `json:"type"`
+	Icon    *string `json:"icon"`
 }
