@@ -52,6 +52,7 @@ type RideNotification struct {
 	Name      string `json:"name"`
 	Type      string `json:"type"`
 	OrderId   int    `json:"order_id" db:"order_id"`
+	ClientId  int    `json:"client_id" db:"client_id"`
 	CreatedAt string `json:"created_at" db:"created_at"`
 }
 
@@ -86,13 +87,14 @@ type Activity struct {
 }
 
 type Order struct {
-	Id          int    `json:"id" db:"id"`
-	DriverId    *int   `json:"driver_id" db:"driver_id"`
-	ClientId    int    `json:"client_id" db:"client_id"`
-	OrderId     int    `json:"order_id" db:"order_id"`
-	OrderType   string `json:"order_type" db:"order_type"`
-	OrderStatus string `json:"order_status" db:"order_status"`
-	CreatedAt   string `json:"created_at" db:"created_at"`
+	Id          int     `json:"id" db:"id"`
+	DriverId    *int    `json:"driver_id" db:"driver_id"`
+	ClientId    int     `json:"client_id" db:"client_id"`
+	OrderId     int     `json:"order_id" db:"order_id"`
+	OrderType   string  `json:"order_type" db:"order_type"`
+	OrderStatus string  `json:"order_status" db:"order_status"`
+	CreatedAt   string  `json:"created_at" db:"created_at"`
+	ChangedAt   *string `json:"changed_at" db:"changed_at"`
 }
 type CancelOrRateReasons struct {
 	ReasonId string  `json:"reason_id" form:"reason_id"`
@@ -155,6 +157,7 @@ type CityOrderPoints struct {
 }
 type CityOrderRequest struct {
 	DriverLastLocation *string  `json:"driver_last_location" form:"driver_last_location"`
+	DriverLastAddress  *string  `json:"driver_last_address" form:"driver_last_address"`
 	OrderAmount        *float64 `json:"order_amount" form:"order_amount"`
 	WaitTime           *int     `json:"wait_time" form:"wait_time"`
 	WaitTimeAmount     *float64 `json:"wait_time_amount" form:"wait_time_amount"`
@@ -190,6 +193,7 @@ type CityOrder struct {
 	RideInfoArr      *CityOrderRequest       `json:"ride_info_arr,omitempty"`
 	OrderStatus      string                  `json:"order_status,omitempty" db:"order_status" form:"order_status"`
 	Comments         *string                 `json:"comments" db:"comments" form:"comments"`
+	ChangedAt        *string                 `json:"changed_at" db:"changed_at"`
 	CreatedAt        *string                 `json:"created_at" db:"created_at"`
 }
 

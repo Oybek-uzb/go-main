@@ -450,3 +450,33 @@ func CancelTaxi(orderId int) error {
 	}
 	return nil
 }
+
+func AcceptTaxi(orderId int) error {
+	url := fmt.Sprintf(viper.GetString("services.socket")+"/search-drivers/%v/accept", orderId)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.New("couldn't connect to socket api")
+	}
+	defer resp.Body.Close()
+	var responseData SocketResponse
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(response, &responseData)
+	if err != nil {
+		return errors.New("error while parsing json")
+	}
+	if !responseData.Success {
+		return errors.New("error while cancelling")
+	}
+	return nil
+}

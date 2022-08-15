@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 )
@@ -32,6 +31,11 @@ func (h *Handler) clientOrdersActivityActive(c *gin.Context) {
 		}
 		page = pageFromQuery
 	}
+	orderType := ""
+	orderTypeParam, ok := c.GetQuery("order_type")
+	if ok {
+		orderType = orderTypeParam
+	}
 	districts, err := h.services.Utils.GetDistrictsArr(langId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
@@ -42,7 +46,7 @@ func (h *Handler) clientOrdersActivityActive(c *gin.Context) {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	lists, _, err := h.services.ClientOrders.Activity(userId, page, "active")
+	lists, _, err := h.services.ClientOrders.Activity(userId, page, "active", orderType)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -71,7 +75,6 @@ func (h *Handler) clientOrdersActivityActive(c *gin.Context) {
 		}
 		if list.TariffId != nil {
 			directionWithTariff = fmt.Sprintf("%s, %s", tariffs[*list.TariffId], direction)
-			logrus.Print(directionWithTariff)
 			lists[idx].Direction = &directionWithTariff
 		} else {
 			lists[idx].Direction = &direction
@@ -94,19 +97,24 @@ func (h *Handler) clientOrdersActivityRecentlyCompleted(c *gin.Context) {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+	orderType := ""
+	orderTypeParam, ok := c.GetQuery("order_type")
+	if ok {
+		orderType = orderTypeParam
+	}
 	tariffs, err := h.services.Utils.GetTariffs(langId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	lists, _, err := h.services.ClientOrders.Activity(userId, 1, "recently-completed")
+	lists, _, err := h.services.ClientOrders.Activity(userId, 1, "recently-completed", orderType)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	var direction string
-	var directionWithTariff string
 	for i, list := range lists {
+		var direction string
+		var directionWithTariff string
 		if list.OrderType == "city" {
 			if list.To == nil {
 				direction = fmt.Sprintf("%s -> %s", list.From, utils.Translation["not_set"][langId])
@@ -166,14 +174,19 @@ func (h *Handler) clientOrdersActivityHistory(c *gin.Context) {
 		}
 		page = pageFromQuery
 	}
-	lists, pagination, err := h.services.ClientOrders.Activity(userId, page, "history")
+	orderType := ""
+	orderTypeParam, ok := c.GetQuery("order_type")
+	if ok {
+		orderType = orderTypeParam
+	}
+	lists, pagination, err := h.services.ClientOrders.Activity(userId, page, "history", orderType)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	var direction string
-	var directionWithTariff string
 	for i, list := range lists {
+		var direction string
+		var directionWithTariff string
 		if list.OrderType == "city" {
 			if list.To == nil {
 				direction = fmt.Sprintf("%s -> %s", list.From, utils.Translation["not_set"][langId])
@@ -509,6 +522,17 @@ func (h *Handler) clientCityOrderView(c *gin.Context) {
 		return
 	}
 	order.PointsArr = &pointsArr
+	tariffId, err := strconv.Atoi(order.TariffId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	tariffInfo, err := h.services.DriverOrders.CityTariffInfo(pointsArr.Points[0].Location, tariffId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	order.TariffInfo = &tariffInfo
 	if order.RideInfo != nil {
 		var reqArr models.CityOrderRequest
 		err = json.Unmarshal([]byte(*order.RideInfo), &reqArr)

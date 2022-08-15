@@ -125,6 +125,47 @@ func (r *AuthPostgres) ClientUpdatePhone(userId int, phone string) error {
 
 	return tx.Commit()
 }
+func (r *AuthPostgres) DriverCheckPhone(phone string) error {
+	query := fmt.Sprintf("SELECT id FROM %s WHERE login=$1 AND user_type=$2", usersTable)
+	var usr models.User
+	err := r.db.Get(&usr, query, phone, driverType)
+	if usr.Id == 0 {
+		return nil
+	} else {
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+		return errors.New("driver with this number already exists")
+	}
+}
+func (r *AuthPostgres) DriverUpdatePhone(userId int, phone string) error {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+	var usr models.User
+	usrQuery := fmt.Sprintf("SELECT u.driver_id FROM %s u INNER JOIN dashboard.%s c ON c.id = u.driver_id WHERE u.id=$1", usersTable, driverTable)
+	err = tx.Get(&usr, usrQuery, userId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	updateUserQuery := fmt.Sprintf(`UPDATE %s SET login = $1 WHERE id = $2`, usersTable)
+	_, err = tx.Exec(updateUserQuery, phone, userId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	updateDriverQuery := fmt.Sprintf(`UPDATE dashboard.%s SET phone = $1 WHERE id = $2`, driverTable)
+	_, err = tx.Exec(updateDriverQuery, phone, usr.DriverId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}
 
 func (r *AuthPostgres) CreateOrUpdateClient(user models.User) (int, error) {
 	tx, err := r.db.Beginx()

@@ -2,8 +2,8 @@ port: "8010"
 
 sms_broker:
   endpoint: "http://91.204.239.44/broker-api/send"
-  originator: "AllOne"
-  msg_alias: "ao"
+  originator: "3700"
+  msg_alias: "ab"
 
 auth:
   hash_salt: "PIxP1o559vv5SQGiOEat"

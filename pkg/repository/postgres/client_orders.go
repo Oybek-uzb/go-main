@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 	"strconv"
 	"strings"
 )
@@ -148,7 +149,7 @@ type CityOrderPoints struct {
 	Points []CityOrderPoint `json:"points"`
 }
 
-func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType string) ([]models.Activity, models.Pagination, error) {
+func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType, orderType string) ([]models.Activity, models.Pagination, error) {
 	limit, err := strconv.Atoi(viper.GetString("vars.items_limit"))
 	if err != nil {
 		return []models.Activity{}, models.Pagination{}, err
@@ -160,9 +161,18 @@ func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType strin
 	var cityOrderPoints CityOrderPoints
 	var query string
 	var pagination models.Pagination
+	orderTypeQuery := ""
+	switch orderType {
+	case "city":
+		orderTypeQuery = "AND order_type='city'"
+		break
+	case "interregional":
+		orderTypeQuery = "AND order_type='interregional'"
+		break
+	}
 	switch activityType {
 	case "active":
-		query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('new', 'driver_accepted', 'driver_arrived', 'trip_started') ORDER BY id DESC LIMIT $2 OFFSET $3", ordersTable)
+		query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('new', 'driver_accepted', 'driver_arrived', 'client_going_out', 'trip_started') AND (CASE WHEN order_status = 'new' THEN created_at > current_timestamp - (4 * interval '1 minute') ELSE true END) ORDER BY id DESC LIMIT $2 OFFSET $3", ordersTable)
 		err = r.db.Select(&lists, query, userId, limit, offset)
 		break
 	case "recently-completed":
@@ -170,9 +180,9 @@ func (r *ClientOrdersPostgres) Activity(userId int, page int, activityType strin
 		err = r.db.Select(&lists, query, userId)
 		break
 	case "history":
-		query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('client_cancelled','driver_cancelled','order_completed') ORDER BY id DESC LIMIT $2 OFFSET $3", ordersTable)
+		query = fmt.Sprintf("SELECT id as order_id, order_id as sub_order_id, order_type,order_status as status,created_at as order_time FROM %s WHERE client_id=$1 AND order_status IN('client_cancelled','driver_cancelled','order_completed') %s ORDER BY id DESC LIMIT $2 OFFSET $3", ordersTable, orderTypeQuery)
 		err = r.db.Select(&lists, query, userId, limit, offset)
-		paginationQuery := fmt.Sprintf("SELECT count(*) AS total, $1 as current_page, CEIL(count(*)::decimal/$2) as last_page,$2 as per_page FROM %s WHERE client_id=$3 AND order_status IN('client_cancelled','driver_cancelled','order_completed')", ordersTable)
+		paginationQuery := fmt.Sprintf("SELECT count(*) AS total, $1 as current_page, CEIL(count(*)::decimal/$2) as last_page,$2 as per_page FROM %s WHERE client_id=$3 AND order_status IN('client_cancelled','driver_cancelled','order_completed') %s", ordersTable, orderTypeQuery)
 		err = r.db.Get(&pagination, paginationQuery, page, limit, userId)
 		break
 	}
@@ -262,7 +272,7 @@ func (r *ClientOrdersPostgres) ChatFetch(userId, rideId, orderId int) ([]models.
 
 func (r *ClientOrdersPostgres) CityTariffs(districtId, langId int) ([]models.CityTariffs, error) {
 	var lists []models.CityTariffs
-	tariffsQuery := fmt.Sprintf("SELECT t.id,rt.starting_price as start_price, rt.per_kilometer as price_per_km, rt.countryside as price_per_km_outer, rt.conditioner as ac_price, t.cars as cars, tl.name as tariff_name, tl.description as description, t.image as icon, t.additional as image, rt.expectation  FROM %s t LEFT JOIN %s tl ON t.id = tl.tariff_id LEFT JOIN %s rt ON t.id = rt.tariff_id WHERE tl.language_id=$1 AND rt.district_id=$2 ORDER BY array_position(ARRAY[8,1,2,3,13,4,5,6,7,9,10,11,12]::bigint[], t.id)", tariffsTable, tariffsLangTable, routeCityTaxiTable)
+	tariffsQuery := fmt.Sprintf("SELECT t.id,rt.starting_price as start_price, rt.per_kilometer as price_per_km, rt.countryside as price_per_km_outer, rt.conditioner as ac_price, t.cars as cars, tl.name as tariff_name, tl.description as description, t.image as icon, t.additional as image, rt.expectation  FROM %s t LEFT JOIN %s tl ON t.id = tl.tariff_id LEFT JOIN %s rt ON t.id = rt.tariff_id WHERE tl.language_id=$1 AND rt.district_id=$2 ORDER BY array_position(ARRAY[1,2,3,13,4,5,6,7,8,9,10,11,12]::bigint[], t.id)", tariffsTable, tariffsLangTable, routeCityTaxiTable)
 	err := r.dash.Select(&lists, tariffsQuery, langId, districtId)
 	return lists, err
 }
@@ -323,7 +333,7 @@ func (r *ClientOrdersPostgres) CityNewOrder(order models.CityOrder, userId int) 
 
 func (r *ClientOrdersPostgres) CityOrderView(orderId, userId int) (models.CityOrder, error) {
 	var order models.Order
-	orderQuery := fmt.Sprintf("SELECT order_id,driver_id,order_status FROM %s WHERE id=$1 AND client_id=$2", ordersTable)
+	orderQuery := fmt.Sprintf("SELECT order_id,driver_id,order_status,updated_at as changed_at FROM %s WHERE id=$1 AND client_id=$2", ordersTable)
 	err := r.db.Get(&order, orderQuery, orderId, userId)
 	if err != nil {
 		return models.CityOrder{}, err
@@ -337,6 +347,7 @@ func (r *ClientOrdersPostgres) CityOrderView(orderId, userId int) (models.CityOr
 	subOrder.Id = orderId
 	subOrder.DriverId = order.DriverId
 	subOrder.OrderStatus = order.OrderStatus
+	subOrder.ChangedAt = order.ChangedAt
 	return subOrder, nil
 }
 
@@ -347,8 +358,10 @@ func (r *ClientOrdersPostgres) CityOrderChangeStatus(cancelOrRate models.CancelO
 	if err != nil {
 		return 0, err
 	}
-	if ord.DriverId == nil && ord.OrderStatus != "new" {
-		return 0, errors.New("driver not found")
+	if ord.DriverId == nil {
+		if !slices.Contains([]string{"new", "client_cancelled"}, ord.OrderStatus) {
+			return 0, errors.New("driver not found")
+		}
 	}
 	tx, err := r.db.Beginx()
 	if err != nil {

@@ -56,7 +56,7 @@ func (s *AuthService) CreateClient(ctx context.Context, client models.Client, us
 	return s.repo.CreateClient(client, userId)
 }
 
-func (s *AuthService) SendActivationCode(userId int, phone string) error {
+func (s *AuthService) ClientSendActivationCode(userId int, phone string) error {
 	codeMin := 10000
 	codeMax := 99999
 	code := strconv.Itoa(rand.Intn(codeMax-codeMin) + codeMin)
@@ -74,10 +74,35 @@ func (s *AuthService) SendActivationCode(userId int, phone string) error {
 	if err != nil {
 		return err
 	}
-	//err = utils.SendSms(login, "Your verification code - "+code)
-	//if err != nil {
-	//	return err
-	//}
+	err = utils.SendSms(phone, "Your verification code - "+code)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AuthService) DriverSendActivationCode(userId int, phone string) error {
+	codeMin := 10000
+	codeMax := 99999
+	code := strconv.Itoa(rand.Intn(codeMax-codeMin) + codeMin)
+	code = strconv.Itoa(11111)
+
+	_, ok := s.redisClient.Get("update_phone" + strconv.Itoa(userId)).Result()
+	if ok == nil {
+		return errors.New("try after a while")
+	}
+	err := s.redisClient.Set("update_phone"+strconv.Itoa(userId), code, 2*time.Minute).Err()
+	if err != nil {
+		return err
+	}
+	err = s.repo.DriverCheckPhone(phone)
+	if err != nil {
+		return err
+	}
+	err = utils.SendSms(phone, "Your verification code - "+code)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -90,6 +115,17 @@ func (s *AuthService) ClientUpdatePhone(userId int, phone, code string) error {
 		return errors.New("wrong code from sms")
 	}
 	return s.repo.ClientUpdatePhone(userId, phone)
+}
+
+func (s *AuthService) DriverUpdatePhone(userId int, phone, code string) error {
+	activationCode, err := s.redisClient.Get("update_phone" + strconv.Itoa(userId)).Result()
+	if err != nil {
+		return err
+	}
+	if activationCode != code {
+		return errors.New("wrong code from sms")
+	}
+	return s.repo.DriverUpdatePhone(userId, phone)
 }
 
 func (s *AuthService) GetClient(userId int) (models.Client, error) {
@@ -171,10 +207,10 @@ func (s *AuthService) ClientSendCode(login string) error {
 	if err != nil {
 		return err
 	}
-	//err = utils.SendSms(login, "Your verification code - "+code)
-	//if err != nil {
-	//	return err
-	//}
+	err = utils.SendSms(login, "Your verification code - "+code)
+	if err != nil {
+		return err
+	}
 
 	return s.repo.ClientSendCode(login, generatePasswordHash(code))
 }
@@ -203,10 +239,10 @@ func (s *AuthService) DriverSendCode(login string) error {
 	if err != nil {
 		return err
 	}
-	//err = utils.SendSms(login, "Your verification code - "+code)
-	//if err != nil {
-	//	return err
-	//}
+	err = utils.SendSms(login, "Your verification code - "+code)
+	if err != nil {
+		return err
+	}
 
 	return s.repo.DriverSendCode(login, generatePasswordHash(code))
 }

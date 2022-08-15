@@ -97,7 +97,7 @@ func (h *Handler) clientUpdatePhoneSendCode(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, "you can't change your phone number")
 		return
 	}
-	err = h.services.Authorization.SendActivationCode(userId, phone)
+	err = h.services.Authorization.ClientSendActivationCode(userId, phone)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -125,6 +125,57 @@ func (h *Handler) clientUpdatePhone(c *gin.Context) {
 	}
 	phone := utils.StripString(input.Phone)
 	err = h.services.Authorization.ClientUpdatePhone(userId, phone, input.Code)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, "ok")
+}
+
+func (h *Handler) driverUpdatePhoneSendCode(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	var input UpdatePhoneSendCodeInput
+	if err := c.Bind(&input); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	driver, err := h.services.GetDriver(userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, "driver not found")
+		return
+	}
+	phone := utils.StripString(input.Phone)
+	if *driver.Phone == phone {
+		newErrorResponse(c, http.StatusBadRequest, "you can't change your phone number")
+		return
+	}
+	err = h.services.Authorization.DriverSendActivationCode(userId, phone)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, map[string]string{
+		"phone": input.Phone,
+	})
+}
+
+func (h *Handler) driverUpdatePhone(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	var input UpdatePhoneInput
+	if err := c.Bind(&input); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	phone := utils.StripString(input.Phone)
+	err = h.services.Authorization.DriverUpdatePhone(userId, phone, input.Code)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

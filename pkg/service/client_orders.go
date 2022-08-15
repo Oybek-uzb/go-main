@@ -35,8 +35,8 @@ func (s *ClientOrdersService) RideSingleStatus(rideId, userId int) (models.Inter
 	return s.repo.RideSingleStatus(rideId, userId)
 }
 
-func (s *ClientOrdersService) Activity(userId, page int, activityType string) ([]models.Activity, models.Pagination, error) {
-	return s.repo.Activity(userId, page, activityType)
+func (s *ClientOrdersService) Activity(userId, page int, activityType, orderType string) ([]models.Activity, models.Pagination, error) {
+	return s.repo.Activity(userId, page, activityType, orderType)
 }
 
 func (s *ClientOrdersService) ChatFetch(userId, rideId, orderId int) ([]models.ChatMessages, error) {

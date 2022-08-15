@@ -58,7 +58,7 @@ func (r *DriverOrdersPostgres) RideSingle(id, userId int) (models.Ride, error) {
 
 func (r *DriverOrdersPostgres) RideSingleNotifications(id, userId int) ([]models.RideNotification, error) {
 	var lists []models.RideNotification
-	listQuery := fmt.Sprintf("(SELECT cln.name, o.id as order_id, 'order' as type, o.created_at FROM %[1]s o LEFT JOIN %[2]s io ON o.order_id = io.id LEFT JOIN %[4]s usr ON o.client_id = usr.id LEFT JOIN %[5]s cln ON usr.client_id = cln.id WHERE io.ride_id=$1 AND o.order_type='interregional' AND o.order_status IN ('new')) UNION ALL (SELECT cln.name, ch.order_id,'message' as type,ch.created_at FROM %[3]s ch LEFT JOIN %[4]s usr ON ch.client_id = usr.id LEFT JOIN %[5]s cln ON usr.client_id = cln.id WHERE ch.ride_id=$1 AND ch.user_type=$2 ORDER BY ch.created_at DESC LIMIT 1) ORDER BY created_at DESC", ordersTable, interregionalOrdersTable, chatMessagesTable, usersTable, clientsTable)
+	listQuery := fmt.Sprintf("(SELECT cln.name, o.client_id as client_id, o.id as order_id, 'order' as type, o.created_at FROM %[1]s o LEFT JOIN %[2]s io ON o.order_id = io.id LEFT JOIN %[4]s usr ON o.client_id = usr.id LEFT JOIN %[5]s cln ON usr.client_id = cln.id WHERE io.ride_id=$1 AND o.order_type='interregional' AND o.order_status IN ('new')) UNION ALL (SELECT DISTINCT ON (ch.client_id) cln.name, ch.client_id as client_id, ch.order_id,'message' as type,ch.created_at FROM %[3]s ch LEFT JOIN %[4]s usr ON ch.client_id = usr.id LEFT JOIN %[5]s cln ON usr.client_id = cln.id WHERE ch.ride_id=$1 AND ch.user_type=$2 ORDER BY ch.client_id, ch.created_at DESC) ORDER BY created_at DESC", ordersTable, interregionalOrdersTable, chatMessagesTable, usersTable, clientsTable)
 	err := r.db.Select(&lists, listQuery, id, clientType)
 	return lists, err
 }
@@ -222,11 +222,11 @@ func (r *DriverOrdersPostgres) CityOrderChangeStatus(req models.CityOrderRequest
 		uType = "online"
 	}
 	if status == "order_completed" {
-		orderStatus = "('trip_started')"
+		orderStatus = "('order_completed', 'trip_started')"
 		uType = "online"
 	}
 	if status == "driver_arrived" || status == "trip_started" || status == "driver_cancelled" || status == "order_completed" {
-		viewUpdateQuery = fmt.Sprintf("UPDATE %s SET order_status=$3 WHERE id=$1 AND driver_id=$2 AND order_status IN %s", ordersTable, orderStatus)
+		viewUpdateQuery = fmt.Sprintf("UPDATE %s SET order_status=$3, updated_at=NOW() WHERE id=$1 AND driver_id=$2 AND order_status IN %s", ordersTable, orderStatus)
 	}
 	if viewUpdateQuery != "" {
 		res, err := tx.Exec(viewUpdateQuery, orderId, userId, status)
@@ -263,16 +263,45 @@ func (r *DriverOrdersPostgres) CityOrderChangeStatus(req models.CityOrderRequest
 		return 0, errors.New("client not found")
 	}
 	if status == "order_completed" {
+		var rideInfoQuery string
 		rideInfo, err := json.Marshal(req)
 		if err != nil {
 			tx.Rollback()
 			return 0, err
 		}
-		rideInfoQuery := fmt.Sprintf("UPDATE %s SET ride_info=$1 WHERE id=$2", cityOrdersTable)
-		_, err = tx.Exec(rideInfoQuery, string(rideInfo), orderId)
-		if err != nil {
-			tx.Rollback()
-			return 0, err
+		if req.DriverLastLocation != nil && req.DriverLastAddress != nil {
+			var subOrder models.CityOrder
+			subOrderQuery := fmt.Sprintf("SELECT points FROM %s WHERE id=$1", cityOrdersTable)
+			err = tx.Get(&subOrder, subOrderQuery, order.OrderId)
+			if err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+			var pointsArr models.CityOrderPoints
+			err = json.Unmarshal([]byte(subOrder.Points), &pointsArr)
+			if err != nil {
+				return 0, err
+			}
+			newPointsArrPoints := pointsArr.Points
+			newPointsArrPoints = append(newPointsArrPoints, models.PointsArr{Location: *req.DriverLastLocation, Address: *req.DriverLastAddress})
+			pointsArrJson, err := json.Marshal(models.CityOrderPoints{Distance: pointsArr.Distance, Points: newPointsArrPoints})
+			if err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+			rideInfoQuery = fmt.Sprintf("UPDATE %s SET ride_info=$1, price=$3, points=$4 WHERE id=$2", cityOrdersTable)
+			_, err = tx.Exec(rideInfoQuery, string(rideInfo), order.OrderId, req.OrderAmount, string(pointsArrJson))
+			if err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+		} else {
+			rideInfoQuery = fmt.Sprintf("UPDATE %s SET ride_info=$1, price=$3 WHERE id=$2", cityOrdersTable)
+			_, err = tx.Exec(rideInfoQuery, string(rideInfo), order.OrderId, req.OrderAmount)
+			if err != nil {
+				tx.Rollback()
+				return 0, err
+			}
 		}
 	}
 	if status == "driver_cancelled" {
@@ -310,7 +339,7 @@ func (r *DriverOrdersPostgres) CityOrderChangeStatus(req models.CityOrderRequest
 
 func (r *DriverOrdersPostgres) CityOrderView(orderId, userId int) (models.CityOrder, error) {
 	var order models.Order
-	orderQuery := fmt.Sprintf("SELECT order_id,client_id,driver_id,order_status FROM %s WHERE id=$1 AND driver_id=$2", ordersTable)
+	orderQuery := fmt.Sprintf("SELECT order_id,client_id,driver_id,order_status,updated_at as changed_at FROM %s WHERE id=$1 AND driver_id=$2", ordersTable)
 	err := r.db.Get(&order, orderQuery, orderId, userId)
 	if err != nil {
 		return models.CityOrder{}, err

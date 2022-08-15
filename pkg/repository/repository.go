@@ -27,6 +27,8 @@ type Authorization interface {
 	GetDriverCar(userId int) (models.DriverCar, error)
 	GetDriverCarInfo(langId, userId int) (models.DriverCarInfo, error)
 	GetDriverInfo(langId, driverId int) (models.Driver, models.DriverCar, models.DriverCarInfo, error)
+	DriverCheckPhone(phone string) error
+	DriverUpdatePhone(userId int, phone string) error
 }
 
 type Utils interface {
@@ -81,7 +83,7 @@ type ClientOrders interface {
 	RideSingle(langId, id, userId int) (models.ClientRideList, error)
 	RideSingleBook(bookRide models.Ride, rideId, userId int) (int, error)
 	RideSingleStatus(rideId, userId int) (models.InterregionalOrder, error)
-	Activity(userId int, page int, activityType string) ([]models.Activity, models.Pagination, error)
+	Activity(userId int, page int, activityType, orderType string) ([]models.Activity, models.Pagination, error)
 	ChatFetch(userId, rideId, orderId int) ([]models.ChatMessages, error)
 	RideSingleCancel(cancelRide models.CancelOrRateReasons, rideId, orderId, userId int) error
 	CityTariffs(districtId, langId int) ([]models.CityTariffs, error)

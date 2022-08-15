@@ -15,7 +15,8 @@ type Authorization interface {
 	GenerateToken(username, password, userType string) (string, error)
 	ClientSendCode(login string) error
 	ParseToken(token string) (int, string, error)
-	SendActivationCode(userId int, phone string) error
+	ClientSendActivationCode(userId int, phone string) error
+	DriverSendActivationCode(userId int, phone string) error
 	ClientUpdatePhone(userId int, phone, code string) error
 
 	DriverSendCode(login string) error
@@ -29,6 +30,7 @@ type Authorization interface {
 	GetDriverCar(userId int) (models.DriverCar, error)
 	GetDriverCarInfo(langId, userId int) (models.DriverCarInfo, error)
 	GetDriverInfo(langId, driverId int) (models.Driver, models.DriverCar, models.DriverCarInfo, error)
+	DriverUpdatePhone(userId int, phone, code string) error
 }
 
 type Utils interface {
@@ -83,7 +85,7 @@ type ClientOrders interface {
 	RideSingle(langId, id, userId int) (models.ClientRideList, error)
 	RideSingleBook(bookRide models.Ride, rideId, userId int) (int, error)
 	RideSingleStatus(rideId, userId int) (models.InterregionalOrder, error)
-	Activity(userId int, page int, activityType string) ([]models.Activity, models.Pagination, error)
+	Activity(userId int, page int, activityType, orderType string) ([]models.Activity, models.Pagination, error)
 	ChatFetch(userId, rideId, orderId int) ([]models.ChatMessages, error)
 	RideSingleCancel(cancelRide models.CancelOrRateReasons, rideId, orderId, userId int) error
 	CityTariffs(points [][2]float64, langId int) ([]models.CityTariffs, error)

@@ -420,6 +420,11 @@ func (h *Handler) driverCityOrderAccept(c *gin.Context) {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+	err = utils.AcceptTaxi(orderId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 	newSuccessResponse(c, http.StatusOK, "ok")
 }
 func (h *Handler) driverCityOrderArrived(c *gin.Context) {

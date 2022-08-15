@@ -101,6 +101,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 					authProtected.POST("/update", h.driverUpdate)
 					authProtected.GET("/verification", h.driverVerification)
 					authProtected.POST("/sign-up/send-for-moderating", h.driverSignUpSendForModerating)
+					authProtected.POST("/update-phone/send-code", h.driverUpdatePhoneSendCode)
+					authProtected.POST("/update-phone", h.driverUpdatePhone)
 				}
 				carProtected := protected.Group("/car")
 				{
