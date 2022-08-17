@@ -90,6 +90,7 @@ type ClientOrders interface {
 	CityNewOrder(order models.CityOrder, userId int) (int, error)
 	CityOrderView(orderId, userId int) (models.CityOrder, error)
 	CityOrderChangeStatus(cancelOrRate models.CancelOrRateReasons, orderId, userId int, status string) (int, error)
+	CityOrderChange(points string, orderId int) (int, error)
 }
 
 type DriverSettings interface {

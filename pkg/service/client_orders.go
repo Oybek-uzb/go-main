@@ -126,3 +126,31 @@ func (s *ClientOrdersService) CityOrderChangeStatus(cancelOrRate models.CancelOr
 
 	return err
 }
+
+func (s *ClientOrdersService) CityOrderChange(points string, orderId int) error {
+	driverId, err := s.repo.CityOrderChange(points, orderId)
+	if err != nil {
+		return err
+	}
+
+	if err == nil {
+		info := models.DriverOrderSocket{
+			Id:       orderId,
+			DriverId: driverId,
+			Status:   "order_changed",
+		}
+		infoJson, _ := json.Marshal(info)
+		s.ch.Publish(
+			"",
+			"socket-service",
+			false,
+			false,
+			amqp.Publishing{
+				ContentType: "text/plain",
+				Body:        infoJson,
+			},
+		)
+	}
+
+	return nil
+}
