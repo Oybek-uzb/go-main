@@ -105,6 +105,7 @@ type RentCars interface {
 	GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error)
 	GetCarByCategoryIdCarId(categoryId, carId, langId int) (models.Car, error)
 	GetCompaniesList() ([]models.CarCompany, error)
+	GetCarsByCompanyId(companyId int) (models.CarCompanyDetails, error)
 }
 
 type Service struct {

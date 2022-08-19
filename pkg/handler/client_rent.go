@@ -86,3 +86,24 @@ func (h *Handler) rentCompaniesList(c *gin.Context) {
 	}
 	newSuccessResponse(c, http.StatusOK, companies)
 }
+
+func (h *Handler) rentCompanyById(c *gin.Context) {
+	_, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	companyId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid category_id param")
+		return
+	}
+
+	carCompany, err := h.services.RentCars.GetCarsByCompanyId(companyId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, carCompany)
+}

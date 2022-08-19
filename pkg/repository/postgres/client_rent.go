@@ -11,6 +11,27 @@ type RentCarsPostgres struct {
 	dash *sqlx.DB
 }
 
+func (r *RentCarsPostgres) GetCarsByCompanyId(companyId int) (models.CarCompanyDetails, error) {
+	var carCompany models.CarCompanyDetails
+	var cars []models.CarByCompanyId
+
+	query := fmt.Sprintf(`SELECT id, name, photo, web_site, description FROM %s WHERE id=$1`, carsCompanyTable)
+	err := r.dash.Get(&carCompany, query, companyId)
+
+	if err != nil {
+		return models.CarCompanyDetails{}, err
+	}
+
+	query = fmt.Sprintf(`SELECT car.id, car.price, car.photo, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id WHERE car.rent_car_company_id=$1`, carsTable, carsModelTable, carsCompanyTable)
+	err = r.dash.Select(&cars, query, companyId)
+
+	if err == nil {
+		carCompany.Cars = cars
+	}
+
+	return carCompany, err
+}
+
 func (r *RentCarsPostgres) GetCompaniesList() ([]models.CarCompany, error) {
 	var companiesList []models.CarCompany
 
@@ -45,8 +66,8 @@ func (r *RentCarsPostgres) GetCategoriesList() ([]models.CarCategory, error) {
 func (r *RentCarsPostgres) GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error) {
 	var cars []models.CarByCategoryId
 
-	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id`, carsTable, carsModelTable, carsCompanyTable)
-	err := r.dash.Select(&cars, query)
+	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id WHERE car.category_car_id=$1`, carsTable, carsModelTable, carsCompanyTable)
+	err := r.dash.Select(&cars, query, categoryId)
 
 	return cars, err
 }
