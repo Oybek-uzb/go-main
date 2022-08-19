@@ -20,7 +20,7 @@ func (h *Handler) rentCategoriesList(c *gin.Context) {
 	newSuccessResponse(c, http.StatusOK, lists)
 }
 
-func (h *Handler) rentCarsByCategoryID(c *gin.Context) {
+func (h *Handler) rentCarsByCategoryId(c *gin.Context) {
 	_, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -39,4 +39,36 @@ func (h *Handler) rentCarsByCategoryID(c *gin.Context) {
 		return
 	}
 	newSuccessResponse(c, http.StatusOK, cars)
+}
+
+func (h *Handler) rentCarByCategoryIdCarId(c *gin.Context) {
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+
+	_, err = getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	categoryId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid category_id param")
+		return
+	}
+
+	carId, err := strconv.Atoi(c.Param("car_id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid category_id param")
+		return
+	}
+
+	car, err := h.services.RentCars.GetCarByCategoryIdCarId(categoryId, carId, langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, car)
 }

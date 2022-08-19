@@ -56,6 +56,12 @@ const (
 	carsTable            = "rent_car_rent_car_cars"
 	carsModelTable       = "dictionary_car_model"
 	carsCompanyTable     = "rent_car_rent_car_company"
+
+	fcTypeTable     = "dictionary_fc_type"
+	fcTypeTableLang = "dictionary_fc_type_i18n"
+
+	perTypeTable     = "dictionary_per_car"
+	perTypeTableLang = "dictionary_per_car_i18n"
 )
 
 type Config struct {
