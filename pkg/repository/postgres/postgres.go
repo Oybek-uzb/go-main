@@ -62,6 +62,9 @@ const (
 
 	perTypeTable     = "dictionary_per_car"
 	perTypeTableLang = "dictionary_per_car_i18n"
+
+	transmissionTypeTable     = "dictionary_transmission"
+	transmissionTypeTableLang = "dictionary_transmission_i18n"
 )
 
 type Config struct {

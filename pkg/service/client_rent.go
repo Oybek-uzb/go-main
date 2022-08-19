@@ -131,8 +131,8 @@ func (c *ClientRentService) GetCarsByCategoryId(categoryId int) ([]models.CarByC
 	return cars, nil
 }
 
-func (c *ClientRentService) GetCategoriesList() ([]models.CarCategory, error) {
-	carCategories, err := c.repo.GetCategoriesList()
+func (c *ClientRentService) GetCategoriesList(langId int) ([]models.CarCategory, error) {
+	carCategories, err := c.repo.GetCategoriesList(langId)
 	if err != nil {
 		return nil, err
 	}

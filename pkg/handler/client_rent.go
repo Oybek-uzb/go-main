@@ -12,7 +12,13 @@ func (h *Handler) rentCategoriesList(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	lists, err := h.services.RentCars.GetCategoriesList()
+
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+
+	lists, err := h.services.RentCars.GetCategoriesList(langId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
