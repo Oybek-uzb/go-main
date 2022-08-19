@@ -39,8 +39,8 @@ func (r *RentCarsPostgres) GetMyCompanyById(userId, companyId int) (models.CarCo
 func (r *RentCarsPostgres) GetMyCompaniesList(userId int) ([]models.CarCompany, error) {
 	var companiesList []models.CarCompany
 
-	categoriesListQuery := fmt.Sprintf(`SELECT id, name, photo FROM %s WHERE owner_id = $1`, carsCompanyTable)
-	err := r.dash.Select(&companiesList, categoriesListQuery, userId)
+	companiesListQuery := fmt.Sprintf(`SELECT id, name, photo, phone_number FROM %s WHERE owner_id = $1`, carsCompanyTable)
+	err := r.dash.Select(&companiesList, companiesListQuery, userId)
 
 	return companiesList, err
 }
@@ -61,7 +61,7 @@ func (r *RentCarsPostgres) GetCarsByCompanyId(companyId int) (models.CarCompanyD
 	var carCompany models.CarCompanyDetails
 	var cars []models.CarByCompanyId
 
-	query := fmt.Sprintf(`SELECT id, name, photo, web_site, description FROM %s WHERE id=$1`, carsCompanyTable)
+	query := fmt.Sprintf(`SELECT id, name, photo, web_site, description, phone_number FROM %s WHERE id=$1`, carsCompanyTable)
 	err := r.dash.Get(&carCompany, query, companyId)
 
 	if err != nil {

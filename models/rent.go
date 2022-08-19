@@ -50,6 +50,7 @@ type CarCompanyDetails struct {
 	Name        *string          `json:"company_name" db:"name"`
 	Description *string          `json:"description" db:"description"`
 	WebSite     *string          `json:"web_site" db:"web_site"`
+	PhoneNumber *string          `json:"phone_number" db:"phone_number"`
 	Cars        []CarByCompanyId `json:"company_cars"`
 }
 
