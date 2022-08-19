@@ -140,7 +140,7 @@ func (h *Handler) rentCarByCompanyIdCarId(c *gin.Context) {
 	newSuccessResponse(c, http.StatusOK, car)
 }
 
-func (h *Handler) rentMyCompaniesList(c *gin.Context) {
+func (h *Handler) myCompaniesList(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -154,7 +154,7 @@ func (h *Handler) rentMyCompaniesList(c *gin.Context) {
 	newSuccessResponse(c, http.StatusOK, myCompanies)
 }
 
-func (h *Handler) rentMyCompanyById(c *gin.Context) {
+func (h *Handler) myCompanyById(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -173,4 +173,40 @@ func (h *Handler) rentMyCompanyById(c *gin.Context) {
 		return
 	}
 	newSuccessResponse(c, http.StatusOK, carCompany)
+}
+
+func (h *Handler) myCarPark(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	inDiscount := false
+	indicator, ok := c.GetQuery("in_discount")
+	if ok {
+		parsedIndicator, err := strconv.ParseBool(indicator)
+		if err != nil {
+			newErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		inDiscount = parsedIndicator
+	}
+
+	companyId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid company_id param")
+		return
+	}
+
+	cars, err := h.services.RentCars.GetMyCarParkByCompanyId(userId, companyId, inDiscount)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, cars)
+}
+
+func (h *Handler) myCarByCompanyId(c *gin.Context) {
+	h.rentCarByCompanyIdCarId(c)
 }

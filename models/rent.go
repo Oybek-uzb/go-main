@@ -16,6 +16,8 @@ type Car struct {
 	CompanyName  *string `json:"company_name" db:"company_name"`
 	FCTypeName   *string `json:"fc_type_name" db:"fc_type_name"`
 	PerCarName   *string `json:"per_type_name" db:"per_type_name"`
+	InDiscount   bool    `json:"in_discount" db:"in_discount"`
+	Discount     *int    `json:"discount" db:"discount"`
 }
 
 type CarCategory struct {
@@ -30,6 +32,8 @@ type CarByCategoryId struct {
 	Photo       *string `json:"photo" db:"photo"`
 	CompanyName *string `json:"company_name" db:"company_name"`
 	Price       int     `json:"price" db:"price"`
+	InDiscount  bool    `json:"in_discount" db:"in_discount"`
+	Discount    *int    `json:"discount" db:"discount"`
 }
 
 type CarCompany struct {
@@ -55,4 +59,6 @@ type CarByCompanyId struct {
 	Photo       *string `json:"photo" db:"photo"`
 	CompanyName *string `json:"company_name" db:"company_name"`
 	Price       int     `json:"price" db:"price"`
+	InDiscount  bool    `json:"in_discount" db:"in_discount"`
+	Discount    *int    `json:"discount" db:"discount"`
 }

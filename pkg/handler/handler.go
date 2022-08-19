@@ -102,19 +102,20 @@ func (h *Handler) InitRoutes() *gin.Engine {
 				{
 					myCompanies := rent.Group("/my-companies")
 					{
-						myCompanies.GET("/", h.rentMyCompaniesList)
-						myCompanies.GET("/:id", h.rentMyCompanyById)
+						myCompanies.GET("/", h.myCompaniesList)
+						myCompanies.GET("/:id", h.myCompanyById)
 						//myCompanies.POST("/", h.rentMyCompaniesCreate)
-						//myCompanies.GET("/:id/my-car-park", h.rentMyCarParkList)
+						myCompanies.GET("/:id/my-car-park", h.myCarPark)
+						myCompanies.GET("/:id/my-car-park/:car_id", h.myCarByCompanyId)
 						//myCompanies.POST("/:id/my-car-park", h.rentMyCarParkCreate)
-						//
+
 						//announcement := myCompanies.Group("/:id/my-car-park/announcement")
 						//{
-						//	announcement.GET("/", h.rentAnnouncementList)
-						//	announcement.POST("/", h.rentAnnouncementCreate)
-						//	announcement.GET("/:announcement_id", h.rentAnnouncementById)
-						//	announcement.DELETE("/:announcement_id", h.rentAnnouncementDelete)
-						//	announcement.PUT("/:announcement_id", h.rentAnnouncementUpdate)
+						//	//announcement.GET("/", h.rentAnnouncementList)
+						//	//announcement.POST("/", h.rentAnnouncementCreate)
+						//	//announcement.GET("/:announcement_id", h.rentAnnouncementById)
+						//	//announcement.DELETE("/:announcement_id", h.rentAnnouncementDelete)
+						//	//announcement.PUT("/:announcement_id", h.rentAnnouncementUpdate)
 						//}
 					}
 				}

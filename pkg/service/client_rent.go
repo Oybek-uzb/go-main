@@ -13,6 +13,21 @@ type ClientRentService struct {
 	ch   *amqp.Channel
 }
 
+func (c *ClientRentService) GetMyCarParkByCompanyId(userId, companyId int, inDiscount bool) ([]models.Car, error) {
+	cars, err := c.repo.GetMyCarParkByCompanyId(userId, companyId, inDiscount)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, car := range cars {
+		if car.Photo != nil {
+			cars[i].Photo = utils.GetFileUrl(strings.Split(*car.Photo, "/"))
+		}
+	}
+
+	return cars, nil
+}
+
 func (c *ClientRentService) GetMyCompanyById(userId, companyId int) (models.CarCompany, error) {
 	company, err := c.repo.GetMyCompanyById(userId, companyId)
 	if err != nil {
