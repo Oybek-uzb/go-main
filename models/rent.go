@@ -19,9 +19,9 @@ type Car struct {
 }
 
 type CarCategory struct {
-	Id           int     `json:"id"`
-	Photo        *string `json:"photo" db:"photo"`
-	CategoryName *string `json:"category_name" db:"name"`
+	Id    int     `json:"id"`
+	Photo *string `json:"photo" db:"photo"`
+	Name  *string `json:"category_name" db:"name"`
 }
 
 type CarByCategoryId struct {
@@ -30,4 +30,10 @@ type CarByCategoryId struct {
 	Photo       *string `json:"photo" db:"photo"`
 	CompanyName *string `json:"company_name" db:"company_name"`
 	Price       int     `json:"price" db:"price"`
+}
+
+type CarCompany struct {
+	Id    int     `json:"id"`
+	Photo *string `json:"photo" db:"photo"`
+	Name  *string `json:"company_name" db:"name"`
 }

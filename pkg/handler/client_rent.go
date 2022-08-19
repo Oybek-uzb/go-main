@@ -72,3 +72,17 @@ func (h *Handler) rentCarByCategoryIdCarId(c *gin.Context) {
 	}
 	newSuccessResponse(c, http.StatusOK, car)
 }
+
+func (h *Handler) rentCompaniesList(c *gin.Context) {
+	_, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	companies, err := h.services.RentCars.GetCompaniesList()
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, companies)
+}

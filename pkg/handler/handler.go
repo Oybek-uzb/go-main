@@ -90,13 +90,13 @@ func (h *Handler) InitRoutes() *gin.Engine {
 					rentCategories.GET("/:id/:car_id", h.rentCarByCategoryIdCarId)
 					//rentCategories.POST("/:id/:car_id", h.rentCarCreate)
 				}
-				//rentCompanies := protected.Group("/rent-companies")
-				//{
-				//	rentCompanies.GET("/", h.rentCompaniesList)
-				//	rentCompanies.GET("/:id", h.rentCompany)
-				//	rentCompanies.GET("/:id/:car_id", h.rentCarByCompanyId)
-				//	rentCompanies.POST("/:id/:car_id", h.rentCarFromCompanyCreate)
-				//}
+				rentCompanies := protected.Group("/rent-companies")
+				{
+					rentCompanies.GET("/", h.rentCompaniesList)
+					//rentCompanies.GET("/:id", h.rentCompany)
+					//rentCompanies.GET("/:id/:car_id", h.rentCarByCompanyId)
+					//rentCompanies.POST("/:id/:car_id", h.rentCarFromCompanyCreate)
+				}
 				//
 				//rent := protected.Group("/rent")
 				//{
