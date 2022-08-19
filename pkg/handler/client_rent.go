@@ -61,7 +61,7 @@ func (h *Handler) rentCarByCategoryIdCarId(c *gin.Context) {
 
 	carId, err := strconv.Atoi(c.Param("car_id"))
 	if err != nil {
-		newErrorResponse(c, http.StatusBadRequest, "invalid category_id param")
+		newErrorResponse(c, http.StatusBadRequest, "invalid car_id param")
 		return
 	}
 
@@ -96,7 +96,7 @@ func (h *Handler) rentCompanyById(c *gin.Context) {
 
 	companyId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		newErrorResponse(c, http.StatusBadRequest, "invalid category_id param")
+		newErrorResponse(c, http.StatusBadRequest, "invalid company_id param")
 		return
 	}
 
@@ -106,4 +106,36 @@ func (h *Handler) rentCompanyById(c *gin.Context) {
 		return
 	}
 	newSuccessResponse(c, http.StatusOK, carCompany)
+}
+
+func (h *Handler) rentCarByCompanyIdCarId(c *gin.Context) {
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+
+	_, err = getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	companyId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid company_id param")
+		return
+	}
+
+	carId, err := strconv.Atoi(c.Param("car_id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid car_id param")
+		return
+	}
+
+	car, err := h.services.RentCars.GetCarByCompanyIdCarId(companyId, carId, langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, car)
 }

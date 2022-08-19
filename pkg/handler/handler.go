@@ -94,7 +94,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 				{
 					rentCompanies.GET("/", h.rentCompaniesList)
 					rentCompanies.GET("/:id", h.rentCompanyById)
-					//rentCompanies.GET("/:id/:car_id", h.rentCarByCompanyId)
+					rentCompanies.GET("/:id/:car_id", h.rentCarByCompanyIdCarId)
 					//rentCompanies.POST("/:id/:car_id", h.rentCarFromCompanyCreate)
 				}
 				//
