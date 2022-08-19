@@ -11,6 +11,15 @@ type RentCarsPostgres struct {
 	dash *sqlx.DB
 }
 
+func (r *RentCarsPostgres) GetMyCompanyById(userId, companyId int) (models.CarCompany, error) {
+	var company models.CarCompany
+
+	query := fmt.Sprintf(`SELECT id, photo, name, phone_number, description FROM %s WHERE owner_id=$1 AND id=$2`, carsCompanyTable)
+	err := r.dash.Get(&company, query, userId, companyId)
+
+	return company, err
+}
+
 func (r *RentCarsPostgres) GetMyCompaniesList(userId int) ([]models.CarCompany, error) {
 	var companiesList []models.CarCompany
 

@@ -33,9 +33,11 @@ type CarByCategoryId struct {
 }
 
 type CarCompany struct {
-	Id    int     `json:"id"`
-	Photo *string `json:"photo" db:"photo"`
-	Name  *string `json:"company_name" db:"name"`
+	Id          int     `json:"id"`
+	Photo       *string `json:"photo" db:"photo"`
+	Name        *string `json:"company_name" db:"name"`
+	PhoneNumber *string `json:"phone_number" db:"phone_number"`
+	Description *string `json:"description" db:"description"`
 }
 
 type CarCompanyDetails struct {

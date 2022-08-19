@@ -103,8 +103,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 					myCompanies := rent.Group("/my-companies")
 					{
 						myCompanies.GET("/", h.rentMyCompaniesList)
+						myCompanies.GET("/:id", h.rentMyCompanyById)
 						//myCompanies.POST("/", h.rentMyCompaniesCreate)
-						//myCompanies.GET("/:id", h.rentMyCompanyById)
 						//myCompanies.GET("/:id/my-car-park", h.rentMyCarParkList)
 						//myCompanies.POST("/:id/my-car-park", h.rentMyCarParkCreate)
 						//

@@ -153,3 +153,24 @@ func (h *Handler) rentMyCompaniesList(c *gin.Context) {
 	}
 	newSuccessResponse(c, http.StatusOK, myCompanies)
 }
+
+func (h *Handler) rentMyCompanyById(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	myCompanyId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid company_id param")
+		return
+	}
+
+	carCompany, err := h.services.RentCars.GetMyCompanyById(userId, myCompanyId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, carCompany)
+}
