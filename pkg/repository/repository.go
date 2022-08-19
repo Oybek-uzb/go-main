@@ -98,6 +98,11 @@ type DriverSettings interface {
 	SetOnline(userId int, isActive int) error
 }
 
+type RentCars interface {
+	GetCategoriesList() ([]models.CarCategory, error)
+	GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error)
+}
+
 type Repository struct {
 	Authorization
 	Utils
@@ -106,6 +111,7 @@ type Repository struct {
 	DriverOrders
 	ClientOrders
 	DriverSettings
+	RentCars
 }
 
 func NewRepository(dashboard *sqlx.DB, public *sqlx.DB) *Repository {
@@ -117,5 +123,6 @@ func NewRepository(dashboard *sqlx.DB, public *sqlx.DB) *Repository {
 		DriverOrders:   postgres.NewDriverOrdersPostgres(public, dashboard),
 		ClientOrders:   postgres.NewClientOrdersPostgres(public, dashboard),
 		DriverSettings: postgres.NewDriverSettingsPostgres(public, dashboard),
+		RentCars:       postgres.NewRentCarsPostgres(public, dashboard),
 	}
 }
