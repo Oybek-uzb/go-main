@@ -99,6 +99,19 @@ type DriverSettings interface {
 	SetOnline(userId int, isActive int) error
 }
 
+type RentCars interface {
+	GetCategoriesList(langId int) ([]models.CarCategory, error)
+	GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error)
+	GetCarByCategoryIdCarId(categoryId, carId, langId int) (models.Car, error)
+	PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error)
+	GetCompaniesList() ([]models.CarCompany, error)
+	GetCarsByCompanyId(companyId int) (models.CarCompanyDetails, error)
+	GetCarByCompanyIdCarId(companyId, carId, langId int) (models.Car, error)
+	GetMyCompaniesList(userId int) ([]models.CarCompany, error)
+	GetMyCompanyById(userId, companyId int) (models.CarCompany, error)
+	GetMyCarParkByCompanyId(userId, companyId int, inDiscount bool) ([]models.Car, error)
+}
+
 type Repository struct {
 	Authorization
 	Utils
@@ -107,6 +120,7 @@ type Repository struct {
 	DriverOrders
 	ClientOrders
 	DriverSettings
+	RentCars
 }
 
 func NewRepository(dashboard *sqlx.DB, public *sqlx.DB) *Repository {
@@ -118,5 +132,6 @@ func NewRepository(dashboard *sqlx.DB, public *sqlx.DB) *Repository {
 		DriverOrders:   postgres.NewDriverOrdersPostgres(public, dashboard),
 		ClientOrders:   postgres.NewClientOrdersPostgres(public, dashboard),
 		DriverSettings: postgres.NewDriverSettingsPostgres(public, dashboard),
+		RentCars:       postgres.NewRentCarsPostgres(public, dashboard),
 	}
 }

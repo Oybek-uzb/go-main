@@ -50,6 +50,23 @@ const (
 	driverType             = "driver"
 	orderCityType          = "city"
 	orderInterregionalType = "interregional"
+
+	carCategoryTableLang = "dictionary_category_car_i18n"
+	carCategoryTable     = "dictionary_category_car"
+	carsTable            = "rent_car_rent_car_cars"
+	carsModelTable       = "dictionary_car_model"
+	carsCompanyTable     = "rent_car_rent_car_company"
+
+	rentCarTable = "rent_car_book_car"
+
+	fcTypeTable     = "dictionary_fc_type"
+	fcTypeTableLang = "dictionary_fc_type_i18n"
+
+	perTypeTable     = "dictionary_per_car"
+	perTypeTableLang = "dictionary_per_car_i18n"
+
+	transmissionTypeTable     = "dictionary_transmission"
+	transmissionTypeTableLang = "dictionary_transmission_i18n"
 )
 
 type Config struct {

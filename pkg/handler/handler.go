@@ -84,6 +84,42 @@ func (h *Handler) InitRoutes() *gin.Engine {
 						order.POST("/:id/change-order-points", h.clientCityOrderChange)
 					}
 				}
+				rentCategories := protected.Group("/rent-categories")
+				{
+					rentCategories.GET("/", h.rentCategoriesList)
+					rentCategories.GET("/:id", h.rentCarsByCategoryId)
+					rentCategories.GET("/:id/:car_id", h.rentCarByCategoryIdCarId)
+					rentCategories.POST("/:id/:car_id", h.rentCarFromCategoryCreate)
+				}
+				rentCompanies := protected.Group("/rent-companies")
+				{
+					rentCompanies.GET("/", h.rentCompaniesList)
+					rentCompanies.GET("/:id", h.rentCompanyById)
+					rentCompanies.GET("/:id/:car_id", h.rentCarByCompanyIdCarId)
+					//rentCompanies.POST("/:id/:car_id", h.rentCarFromCompanyCreate)
+				}
+
+				rent := protected.Group("/rent")
+				{
+					myCompanies := rent.Group("/my-companies")
+					{
+						myCompanies.GET("/", h.myCompaniesList)
+						myCompanies.GET("/:id", h.myCompanyById)
+						//myCompanies.POST("/", h.rentMyCompaniesCreate)
+						myCompanies.GET("/:id/my-car-park", h.myCarPark)
+						myCompanies.GET("/:id/my-car-park/:car_id", h.myCarByCompanyId)
+						//myCompanies.POST("/:id/my-car-park", h.rentMyCarParkCreate)
+
+						//announcement := myCompanies.Group("/:id/my-car-park/announcement")
+						//{
+						//	//announcement.GET("/", h.rentAnnouncementList)
+						//	//announcement.POST("/", h.rentAnnouncementCreate)
+						//	//announcement.GET("/:announcement_id", h.rentAnnouncementById)
+						//	//announcement.DELETE("/:announcement_id", h.rentAnnouncementDelete)
+						//	//announcement.PUT("/:announcement_id", h.rentAnnouncementUpdate)
+						//}
+					}
+				}
 			}
 		}
 		driver := api.Group("/driver")

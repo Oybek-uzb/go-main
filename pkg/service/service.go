@@ -101,6 +101,19 @@ type DriverSettings interface {
 	SetOnline(userId int, isActive int) error
 }
 
+type RentCars interface {
+	GetCategoriesList(langId int) ([]models.CarCategory, error)
+	GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error)
+	GetCarByCategoryIdCarId(categoryId, carId, langId int) (models.Car, error)
+	PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error)
+	GetCompaniesList() ([]models.CarCompany, error)
+	GetCarsByCompanyId(companyId int) (models.CarCompanyDetails, error)
+	GetCarByCompanyIdCarId(companyId, carId, langId int) (models.Car, error)
+	GetMyCompaniesList(userId int) ([]models.CarCompany, error)
+	GetMyCompanyById(userId, companyId int) (models.CarCompany, error)
+	GetMyCarParkByCompanyId(userId, companyId int, inDiscount bool) ([]models.Car, error)
+}
+
 type Service struct {
 	Authorization
 	Utils
@@ -109,6 +122,7 @@ type Service struct {
 	DriverOrders
 	ClientOrders
 	DriverSettings
+	RentCars
 }
 
 func NewService(repos *repository.Repository, client *redis.Client, storage storage.Storage, ch *amqp.Channel) *Service {
@@ -120,5 +134,6 @@ func NewService(repos *repository.Repository, client *redis.Client, storage stor
 		DriverOrders:   NewDriverOrdersService(repos.DriverOrders, ch),
 		ClientOrders:   NewClientOrdersService(repos.ClientOrders, ch),
 		DriverSettings: NewDriverSettingsService(repos.DriverSettings),
+		RentCars:       NewClientRentService(repos.RentCars, ch),
 	}
 }
