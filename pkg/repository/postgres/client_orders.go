@@ -461,3 +461,30 @@ func (r *ClientOrdersPostgres) CityOrderChangeStatus(cancelOrRate models.CancelO
 	}
 	return *ord.DriverId, nil
 }
+
+func (r *ClientOrdersPostgres) CityOrderChange(points string, orderId int) (int, error) {
+	var order models.Order
+
+	selectOrdId := fmt.Sprintf(`SELECT order_id, driver_id FROM %s WHERE id=$1`, ordersTable)
+	err := r.db.Get(&order, selectOrdId, orderId)
+	if err != nil {
+		return 0, err
+	}
+
+	updateQuery := fmt.Sprintf(`UPDATE %s SET points=$1 WHERE id = $2 RETURNING id`, cityOrdersTable)
+
+	res, err := r.db.Exec(updateQuery, points, order.OrderId)
+	if err != nil {
+		return 0, err
+	}
+
+	updated, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	if updated == 0 {
+		return 0, errors.New("order does not exist")
+	}
+	return *order.DriverId, nil
+}

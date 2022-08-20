@@ -616,3 +616,28 @@ func (h *Handler) clientCityOrderRate(c *gin.Context) {
 	}
 	newSuccessResponse(c, http.StatusOK, "ok")
 }
+
+func (h *Handler) clientCityOrderChange(c *gin.Context) {
+	orderId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid order_id param")
+		return
+	}
+
+	var city models.CityOrder
+	if err = c.Bind(&city); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if len(city.Points) == 0 {
+		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	err = h.services.ClientOrders.CityOrderChange(city.Points, orderId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	newSuccessResponse(c, http.StatusOK, "OK")
+}
