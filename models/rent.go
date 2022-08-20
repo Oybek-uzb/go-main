@@ -75,7 +75,7 @@ type RentMyCompanyCreate struct {
 	WebSite     *string `json:"web_site" db:"web_site" form:"web_site"`
 	PhoneNumber *string `json:"phone_number" db:"phone_number" form:"phone_number"`
 	Status      *string `json:"status" db:"status" form:"status"`
-	OwnerId     *int    `json:"owner_id" db:"owner_id"`
+	OwnerId     int     `json:"owner_id" db:"owner_id"`
 }
 
 type RentCarDetails struct {
