@@ -121,14 +121,14 @@ func (r *RentCarsPostgres) GetCarsByCompanyId(companyId int) (models.CarCompanyD
 	var carCompany models.CarCompanyDetails
 	var cars []models.CarByCompanyId
 
-	query := fmt.Sprintf(`SELECT id, name, photo, web_site, description, phone_number FROM %s WHERE id=$1`, carsCompanyTable)
+	query := fmt.Sprintf(`SELECT id, name, photo, web_site, description, phone_number FROM %s WHERE id=$1 AND status='checked'`, carsCompanyTable)
 	err := r.dash.Get(&carCompany, query, companyId)
 
 	if err != nil {
 		return models.CarCompanyDetails{}, err
 	}
 
-	query = fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.in_discount, car.discount, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id WHERE car.rent_car_company_id=$1`, carsTable, carsModelTable, carsCompanyTable)
+	query = fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.in_discount, car.discount, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id WHERE car.rent_car_company_id=$1 AND company.status='checked'`, carsTable, carsModelTable, carsCompanyTable)
 	err = r.dash.Select(&cars, query, companyId)
 
 	if err == nil {
@@ -141,7 +141,7 @@ func (r *RentCarsPostgres) GetCarsByCompanyId(companyId int) (models.CarCompanyD
 func (r *RentCarsPostgres) GetCompaniesList() ([]models.CarCompany, error) {
 	var companiesList []models.CarCompany
 
-	categoriesListQuery := fmt.Sprintf(`SELECT id, name, photo FROM %s`, carsCompanyTable)
+	categoriesListQuery := fmt.Sprintf(`SELECT id, name, photo FROM %s WHERE status='checked'`, carsCompanyTable)
 	err := r.dash.Select(&companiesList, categoriesListQuery)
 
 	return companiesList, err
@@ -171,7 +171,7 @@ func (r *RentCarsPostgres) GetCategoriesList(langId int) ([]models.CarCategory, 
 func (r *RentCarsPostgres) GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error) {
 	var cars []models.CarByCategoryId
 
-	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.discount, car.in_discount, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id WHERE car.category_car_id=$1`, carsTable, carsModelTable, carsCompanyTable)
+	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.discount, car.in_discount, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id WHERE car.category_car_id=$1 AND company.status='checked'`, carsTable, carsModelTable, carsCompanyTable)
 	err := r.dash.Select(&cars, query, categoryId)
 
 	return cars, err
