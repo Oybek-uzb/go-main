@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"abir/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -72,6 +73,33 @@ func (h *Handler) rentCarByCategoryIdCarId(c *gin.Context) {
 	}
 
 	car, err := h.services.RentCars.GetCarByCategoryIdCarId(categoryId, carId, langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, car)
+}
+
+func (h *Handler) rentCarFromCategoryCreate(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var rentDetails models.RentCarDetails
+	if err = c.Bind(&rentDetails); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	carId, err := strconv.Atoi(c.Param("car_id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid car_id param")
+		return
+	}
+
+	car, err := h.services.RentCars.PostRentCarByCarId(userId, carId, rentDetails)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

@@ -57,6 +57,8 @@ const (
 	carsModelTable       = "dictionary_car_model"
 	carsCompanyTable     = "rent_car_rent_car_company"
 
+	rentCarTable = "rent_car_book_car"
+
 	fcTypeTable     = "dictionary_fc_type"
 	fcTypeTableLang = "dictionary_fc_type_i18n"
 

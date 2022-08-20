@@ -4,11 +4,42 @@ import (
 	"abir/models"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"reflect"
 )
 
 type RentCarsPostgres struct {
 	db   *sqlx.DB
 	dash *sqlx.DB
+}
+
+func (r *RentCarsPostgres) PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (rentId int, err error) {
+	details := make(map[string]string)
+
+	var val = reflect.ValueOf(rentCarDetails)
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		fieldName := val.Type().Field(i).Name
+
+		switch field.Kind() {
+		case reflect.Pointer:
+			if field.IsNil() {
+				details[fieldName] = ""
+			} else {
+				details[fieldName] = field.Elem().String()
+			}
+		}
+	}
+
+	query := fmt.Sprintf("INSERT INTO %s (user_id, rent_cars_id, description, start_time, end_time) SELECT $1,$2,$3,$4,$5 RETURNING id", rentCarTable)
+
+	row := r.dash.QueryRow(query, userId, carId, details["Description"], details["FromDate"], details["ToDate"])
+	err = row.Scan(&rentId)
+	if err != nil {
+		return 0, err
+	}
+
+	return
 }
 
 func (r *RentCarsPostgres) GetMyCarParkByCompanyId(userId, companyId int, inDiscount bool) ([]models.Car, error) {

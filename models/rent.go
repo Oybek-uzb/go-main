@@ -64,3 +64,9 @@ type CarByCompanyId struct {
 	InDiscount  bool    `json:"in_discount" db:"in_discount"`
 	Discount    *int    `json:"discount" db:"discount"`
 }
+
+type RentCarDetails struct {
+	FromDate    *string `json:"from_date" db:"start_time"`
+	ToDate      *string `json:"to_date" db:"end_time"`
+	Description *string `json:"description" db:"description"`
+}

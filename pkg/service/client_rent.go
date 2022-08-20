@@ -13,6 +13,15 @@ type ClientRentService struct {
 	ch   *amqp.Channel
 }
 
+func (c *ClientRentService) PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error) {
+	carId, err := c.repo.PostRentCarByCarId(userId, carId, rentCarDetails)
+	if err != nil {
+		return 0, err
+	}
+
+	return carId, nil
+}
+
 func (c *ClientRentService) GetMyCarParkByCompanyId(userId, companyId int, inDiscount bool) ([]models.Car, error) {
 	cars, err := c.repo.GetMyCarParkByCompanyId(userId, companyId, inDiscount)
 	if err != nil {

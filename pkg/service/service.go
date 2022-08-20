@@ -104,6 +104,7 @@ type RentCars interface {
 	GetCategoriesList(langId int) ([]models.CarCategory, error)
 	GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error)
 	GetCarByCategoryIdCarId(categoryId, carId, langId int) (models.Car, error)
+	PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error)
 	GetCompaniesList() ([]models.CarCompany, error)
 	GetCarsByCompanyId(companyId int) (models.CarCompanyDetails, error)
 	GetCarByCompanyIdCarId(companyId, carId, langId int) (models.Car, error)
