@@ -107,6 +107,10 @@ func (h *Handler) rentCarFromCategoryCreate(c *gin.Context) {
 	newSuccessResponse(c, http.StatusOK, car)
 }
 
+func (h *Handler) rentCarFromCompanyCreate(c *gin.Context) {
+	h.rentCarFromCategoryCreate(c)
+}
+
 func (h *Handler) rentCompaniesList(c *gin.Context) {
 	_, err := getUserId(c)
 	if err != nil {
