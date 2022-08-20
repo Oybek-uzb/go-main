@@ -109,6 +109,7 @@ type RentCars interface {
 	GetMyCompaniesList(userId int) ([]models.CarCompany, error)
 	GetMyCompanyById(userId, companyId int) (models.CarCompany, error)
 	GetMyCarParkByCompanyId(userId, companyId int, inDiscount bool) ([]models.Car, error)
+	PostMyCompany(userId int, company models.RentMyCompanyCreate) (int, error)
 }
 
 type Repository struct {

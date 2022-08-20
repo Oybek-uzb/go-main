@@ -12,8 +12,37 @@ type RentCarsPostgres struct {
 	dash *sqlx.DB
 }
 
+func (r *RentCarsPostgres) PostMyCompany(userId int, company models.RentMyCompanyCreate) (companyId int, err error) {
+	details := make(map[string]any)
+
+	var val = reflect.ValueOf(company)
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		fieldName := val.Type().Field(i).Name
+
+		switch field.Kind() {
+		case reflect.Pointer:
+			if field.IsNil() {
+				details[fieldName] = nil
+			} else {
+				details[fieldName] = field.Elem().String()
+			}
+		}
+	}
+	query := fmt.Sprintf("INSERT INTO %s (name, photo, description, web_site, phone_number, status, owner_id) SELECT $1,$2,$3,$4,$5,$6,$7 RETURNING id", carsCompanyTable)
+
+	row := r.dash.QueryRow(query, details["CompanyName"], details["Photo"], details["Description"], details["WebSite"], details["PhoneNumber"], "new", userId)
+	err = row.Scan(&companyId)
+	if err != nil {
+		return 0, err
+	}
+
+	return
+}
+
 func (r *RentCarsPostgres) PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (rentId int, err error) {
-	details := make(map[string]string)
+	details := make(map[string]any)
 
 	var val = reflect.ValueOf(rentCarDetails)
 
@@ -24,7 +53,7 @@ func (r *RentCarsPostgres) PostRentCarByCarId(userId, carId int, rentCarDetails 
 		switch field.Kind() {
 		case reflect.Pointer:
 			if field.IsNil() {
-				details[fieldName] = ""
+				details[fieldName] = nil
 			} else {
 				details[fieldName] = field.Elem().String()
 			}

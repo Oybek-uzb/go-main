@@ -111,6 +111,7 @@ type RentCars interface {
 	GetMyCompaniesList(userId int) ([]models.CarCompany, error)
 	GetMyCompanyById(userId, companyId int) (models.CarCompany, error)
 	GetMyCarParkByCompanyId(userId, companyId int, inDiscount bool) ([]models.Car, error)
+	PostMyCompany(ctx context.Context, userId int, company models.RentMyCompanyCreate) (int, error)
 }
 
 type Service struct {
@@ -133,6 +134,6 @@ func NewService(repos *repository.Repository, client *redis.Client, storage stor
 		DriverOrders:   NewDriverOrdersService(repos.DriverOrders, ch),
 		ClientOrders:   NewClientOrdersService(repos.ClientOrders, ch),
 		DriverSettings: NewDriverSettingsService(repos.DriverSettings),
-		RentCars:       NewClientRentService(repos.RentCars, ch),
+		RentCars:       NewClientRentService(repos.RentCars, ch, storage),
 	}
 }
