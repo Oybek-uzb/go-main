@@ -502,7 +502,20 @@ func CheckForNil(value interface{}) map[string]interface{} {
 					details[fieldName] = field.Elem().Int()
 				case "*bool":
 					details[fieldName] = field.Elem().Bool()
+				case "*float":
+					details[fieldName] = field.Elem().Float()
 				}
+			}
+		} else {
+			switch field.Kind() {
+			case reflect.String:
+				details[fieldName] = val.FieldByName(fieldName).String()
+			case reflect.Int:
+				details[fieldName] = val.FieldByName(fieldName).Int()
+			case reflect.Float64:
+				details[fieldName] = val.FieldByName(fieldName).Float()
+			case reflect.Bool:
+				details[fieldName] = val.FieldByName(fieldName).Bool()
 			}
 		}
 	}

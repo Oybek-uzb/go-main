@@ -2,7 +2,6 @@ package models
 
 import (
 	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
 )
 
 type Car struct {
@@ -122,15 +121,15 @@ func (a RentMyCompanyCreate) ValidateCompanyCreate() error {
 
 func (a CarCreate) ValidateCarCreate() error {
 	return validation.ValidateStruct(&a,
-		validation.Field(&a.DistrictId, validation.Required, is.Digit),
-		validation.Field(&a.CategoryId, validation.Required, is.Digit),
-		validation.Field(&a.MarkId, validation.Required, is.Digit),
-		validation.Field(&a.ModelId, validation.Required, is.Digit),
+		validation.Field(&a.DistrictId, validation.Required),
+		validation.Field(&a.CategoryId, validation.Required),
+		validation.Field(&a.MarkId, validation.Required),
+		validation.Field(&a.ModelId, validation.Required),
 		validation.Field(&a.ColorId, validation.Required),
 		validation.Field(&a.Conditioner, validation.Required),
-		validation.Field(&a.FCTypeId, validation.Required, is.Digit),
-		validation.Field(&a.PerCarId, validation.Required, is.Digit),
-		validation.Field(&a.Price, validation.Required, is.Digit),
+		validation.Field(&a.FCTypeId, validation.Required),
+		validation.Field(&a.PerCarId, validation.Required),
+		validation.Field(&a.Price, validation.Required),
 		validation.Field(&a.PhoneNumber, validation.Required, validation.Length(9, 13)),
 		validation.Field(&a.Description, validation.Required),
 	)

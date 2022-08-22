@@ -2,6 +2,7 @@ package handler
 
 import (
 	"abir/models"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -264,6 +265,7 @@ func (h *Handler) rentAnnouncementCreate(c *gin.Context) {
 	}
 	err = car.ValidateCarCreate()
 	if err != nil {
+		fmt.Println("validation")
 		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
