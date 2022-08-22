@@ -16,8 +16,8 @@ type User struct {
 type Client struct {
 	Id        int     `json:"id" db:"id"`
 	Name      *string `json:"name" form:"name"`
-	Surname   *string `json:"surname" form:"surname" default:""`
-	Birthdate *string `json:"birthdate" form:"birthdate" default:"2006-01-02"`
+	Surname   *string `json:"surname" form:"surname"`
+	Birthdate *string `json:"birthdate" form:"birthdate"`
 	Gender    *string `json:"gender" form:"gender"`
 	Avatar    *string `json:"avatar" form:"avatar"`
 	Phone     *string `json:"phone" db:"phone"`
