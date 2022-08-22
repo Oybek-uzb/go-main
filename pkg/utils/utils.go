@@ -19,6 +19,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -479,4 +480,32 @@ func AcceptTaxi(orderId int) error {
 		return errors.New("error while cancelling")
 	}
 	return nil
+}
+
+func CheckForNil(value interface{}) map[string]interface{} {
+	details := make(map[string]interface{})
+
+	var val = reflect.ValueOf(value)
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		fieldName := val.Type().Field(i).Name
+
+		if field.Kind() == reflect.Pointer {
+			if field.IsNil() {
+				details[fieldName] = nil
+			} else {
+				switch field.Type().String() {
+				case "*string":
+					details[fieldName] = field.Elem().String()
+				case "*int":
+					details[fieldName] = field.Elem().Int()
+				case "*bool":
+					details[fieldName] = field.Elem().Bool()
+				}
+			}
+		}
+	}
+
+	return details
 }

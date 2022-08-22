@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"abir/models"
+	"abir/pkg/utils"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	"reflect"
 )
 
 type RentCarsPostgres struct {
@@ -13,23 +13,7 @@ type RentCarsPostgres struct {
 }
 
 func (r *RentCarsPostgres) PostMyCompany(userId int, company models.RentMyCompanyCreate) (companyId int, err error) {
-	details := make(map[string]any)
-
-	var val = reflect.ValueOf(company)
-
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		fieldName := val.Type().Field(i).Name
-
-		switch field.Kind() {
-		case reflect.Pointer:
-			if field.IsNil() {
-				details[fieldName] = nil
-			} else {
-				details[fieldName] = field.Elem().String()
-			}
-		}
-	}
+	details := utils.CheckForNil(company)
 	query := fmt.Sprintf("INSERT INTO %s (name, photo, description, web_site, phone_number, status, owner_id) SELECT $1,$2,$3,$4,$5,$6,$7 RETURNING id", carsCompanyTable)
 
 	row := r.dash.QueryRow(query, details["CompanyName"], details["Photo"], details["Description"], details["WebSite"], details["PhoneNumber"], "new", userId)
@@ -41,24 +25,36 @@ func (r *RentCarsPostgres) PostMyCompany(userId int, company models.RentMyCompan
 	return
 }
 
+func (r *RentCarsPostgres) PostMyCar(userId, companyId int, car models.CarCreate) (int, error) {
+	//DistrictId  *int    `json:"district_id" db:"district_id" form:"district_id"`
+	//CategoryId  *int    `json:"category_id" db:"category_car_id" form:"category_id"`
+	//MarkId      *int    `json:"mark_id" db:"car_marka_id" form:"mark_id"`
+	//ModelId     *int    `json:"model_id" db:"car_model_id" form:"model_id"`
+	//ColorId     *int    `json:"color_id" db:"color_id" form:"color_id"`
+	//Conditioner bool    `json:"conditioner" db:"conditioner" form:"conditioner"`
+	//FCTypeId    *int    `json:"fc_type_id" db:"fc_type_id" form:"fc_type_id"`
+	//PerCarId    *int    `json:"per_car_id" db:"per_car_id" form:"per_car_id"`
+	//Price       *int    `json:"price" db:"price" form:"price"`
+	//PhoneNumber *string `json:"phone_number" db:"phone_number" form:"phone_number"`
+	//Description *string `json:"description" db:"description" default:"" form:"description"`
+	//Photo
+	//TransmissionId  *int    `json:"transmission_id" db:"transmission_id" form:"transmission_id"`
+	//ConsumptionFuel
+
+	//details := utils.CheckForNil(car)
+	//query := fmt.Sprintf("INSERT INTO %s (conditioner, photo, description, price, phone_number, status, car_marka_id, car_model_id, category_car_id, color_id, district_id, fc_type_id, per_car_id, rent_car_company_id, discount, in_discount, transmission_id, consumption_fuel, region.region_id) LEFT JOIN %s region ON district_id=region.id SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18 RETURNING id", carsTable)
+	//
+	//row := r.dash.QueryRow(query, details["Conditioner"], details["Photo"], details["Description"], details["Price"], details["PhoneNumber"], "new", details["MarkId"], details["ModelId"], details["CategoryId"], details["ColorId"], details["DistrictId"], details["FCTypeId"], details["PerCarId"], companyId, 0, false, details["TransmissionId"], details["ConsumptionFuel"])
+	//err = row.Scan(&companyId)
+	//if err != nil {
+	//	return 0, err
+	//}
+
+	return 0, nil
+}
+
 func (r *RentCarsPostgres) PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (rentId int, err error) {
-	details := make(map[string]any)
-
-	var val = reflect.ValueOf(rentCarDetails)
-
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		fieldName := val.Type().Field(i).Name
-
-		switch field.Kind() {
-		case reflect.Pointer:
-			if field.IsNil() {
-				details[fieldName] = nil
-			} else {
-				details[fieldName] = field.Elem().String()
-			}
-		}
-	}
+	details := utils.CheckForNil(rentCarDetails)
 
 	query := fmt.Sprintf("INSERT INTO %s (user_id, rent_cars_id, description, start_time, end_time) SELECT $1,$2,$3,$4,$5 RETURNING id", rentCarTable)
 
