@@ -1,13 +1,16 @@
 package models
 
-import validation "github.com/go-ozzo/ozzo-validation"
+import (
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
+)
 
 type Car struct {
 	Id               int     `json:"id" db:"id"`
 	Conditioner      bool    `json:"conditioner" db:"conditioner"`
 	Price            int     `json:"price" db:"price"`
 	PhoneNumber      *string `json:"phone_number" db:"phone_number"`
-	Description      string  `json:"description" db:"description"`
+	Description      string  `json:"description" db:"description" default:""`
 	Photo            *string `json:"photo" db:"photo"`
 	MarkName         *string `json:"mark_name" db:"mark_name"`
 	ModelName        *string `json:"model_name" db:"model_name"`
@@ -21,6 +24,23 @@ type Car struct {
 	InDiscount       bool    `json:"in_discount" db:"in_discount"`
 	Discount         *int    `json:"discount" db:"discount"`
 	TransmissionName *string `json:"transmission_name" db:"transmission_name"`
+}
+
+type CarCreate struct {
+	DistrictId      *int    `json:"district_id" db:"district_id" form:"district_id"`
+	CategoryId      *int    `json:"category_id" db:"category_car_id" form:"category_id"`
+	MarkId          *int    `json:"mark_id" db:"car_marka_id" form:"mark_id"`
+	ModelId         *int    `json:"model_id" db:"car_model_id" form:"model_id"`
+	ColorId         *int    `json:"color_id" db:"color_id" form:"color_id"`
+	Conditioner     bool    `json:"conditioner" db:"conditioner" form:"conditioner"`
+	FCTypeId        *int    `json:"fc_type_id" db:"fc_type_id" form:"fc_type_id"`
+	PerCarId        *int    `json:"per_car_id" db:"per_car_id" form:"per_car_id"`
+	Price           *int    `json:"price" db:"price" form:"price"`
+	PhoneNumber     *string `json:"phone_number" db:"phone_number" form:"phone_number"`
+	Description     *string `json:"description" db:"description" default:"" form:"description"`
+	Photo           *string `json:"photo" db:"photo" form:"photo"`
+	TransmissionId  *int    `json:"transmission_id" db:"transmission_id" form:"transmission_id"`
+	ConsumptionFuel *string `json:"consumption_fuel" db:"consumption_fuel" form:"consumption_fuel" default:"10l/100km"`
 }
 
 type CarCategory struct {
@@ -95,6 +115,22 @@ func (a RentMyCompanyCreate) ValidateCompanyCreate() error {
 	return validation.ValidateStruct(&a,
 		validation.Field(&a.CompanyName, validation.Required, validation.Length(2, 100)),
 		validation.Field(&a.Status, validation.In("new", "moderating", "cancelled", "blocked", "checked")),
+		validation.Field(&a.PhoneNumber, validation.Required, validation.Length(9, 13)),
+		validation.Field(&a.Description, validation.Required),
+	)
+}
+
+func (a CarCreate) ValidateCarCreate() error {
+	return validation.ValidateStruct(&a,
+		validation.Field(&a.DistrictId, validation.Required, is.Digit),
+		validation.Field(&a.CategoryId, validation.Required, is.Digit),
+		validation.Field(&a.MarkId, validation.Required, is.Digit),
+		validation.Field(&a.ModelId, validation.Required, is.Digit),
+		validation.Field(&a.ColorId, validation.Required),
+		validation.Field(&a.Conditioner, validation.Required),
+		validation.Field(&a.FCTypeId, validation.Required, is.Digit),
+		validation.Field(&a.PerCarId, validation.Required, is.Digit),
+		validation.Field(&a.Price, validation.Required, is.Digit),
 		validation.Field(&a.PhoneNumber, validation.Required, validation.Length(9, 13)),
 		validation.Field(&a.Description, validation.Required),
 	)

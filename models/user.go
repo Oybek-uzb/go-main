@@ -16,8 +16,8 @@ type User struct {
 type Client struct {
 	Id        int     `json:"id" db:"id"`
 	Name      *string `json:"name" form:"name"`
-	Surname   *string `json:"surname" form:"surname"`
-	Birthdate *string `json:"birthdate" form:"birthdate"`
+	Surname   *string `json:"surname" form:"surname" default:""`
+	Birthdate *string `json:"birthdate" form:"birthdate" default:"2006-01-02"`
 	Gender    *string `json:"gender" form:"gender"`
 	Avatar    *string `json:"avatar" form:"avatar"`
 	Phone     *string `json:"phone" db:"phone"`
@@ -26,16 +26,12 @@ type Client struct {
 func (a Client) ValidateCreate() error {
 	return validation.ValidateStruct(&a,
 		validation.Field(&a.Name, validation.Required, validation.Length(2, 50)),
-		validation.Field(&a.Surname, validation.Required, validation.Length(2, 50)),
-		validation.Field(&a.Birthdate, validation.Required, validation.Date("2006-01-02")),
 		validation.Field(&a.Gender, validation.Required, validation.In("male", "female")),
 	)
 }
 func (a Client) ValidateUpdate() error {
 	return validation.ValidateStruct(&a,
 		validation.Field(&a.Name, validation.NilOrNotEmpty, validation.Length(2, 50)),
-		validation.Field(&a.Surname, validation.NilOrNotEmpty, validation.Length(2, 50)),
-		validation.Field(&a.Birthdate, validation.NilOrNotEmpty, validation.Date("2006-01-02")),
 		validation.Field(&a.Gender, validation.NilOrNotEmpty, validation.In("male", "female")),
 	)
 }
