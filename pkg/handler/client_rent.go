@@ -93,6 +93,12 @@ func (h *Handler) rentCarFromCategoryCreate(c *gin.Context) {
 		return
 	}
 
+	err = rentDetails.ValidateRentCarDetails()
+	if err != nil {
+		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
 	carId, err := strconv.Atoi(c.Param("car_id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid car_id param")
@@ -105,6 +111,10 @@ func (h *Handler) rentCarFromCategoryCreate(c *gin.Context) {
 		return
 	}
 	newSuccessResponse(c, http.StatusOK, car)
+}
+
+func (h *Handler) rentCarFromCompanyCreate(c *gin.Context) {
+	h.rentCarFromCategoryCreate(c)
 }
 
 func (h *Handler) rentCompaniesList(c *gin.Context) {
@@ -207,6 +217,31 @@ func (h *Handler) myCompanyById(c *gin.Context) {
 		return
 	}
 	newSuccessResponse(c, http.StatusOK, carCompany)
+}
+
+func (h *Handler) rentMyCompaniesCreate(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	var company models.RentMyCompanyCreate
+	if err := c.Bind(&company); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = company.ValidateCompanyCreate()
+	if err != nil {
+		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	companyId, err := h.services.RentCars.PostMyCompany(c.Request.Context(), userId, company)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	newSuccessResponse(c, http.StatusOK, companyId)
 }
 
 func (h *Handler) myCarPark(c *gin.Context) {

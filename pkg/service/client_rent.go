@@ -3,14 +3,17 @@ package service
 import (
 	"abir/models"
 	"abir/pkg/repository"
+	"abir/pkg/storage"
 	"abir/pkg/utils"
+	"context"
 	"github.com/streadway/amqp"
 	"strings"
 )
 
 type ClientRentService struct {
-	repo repository.RentCars
-	ch   *amqp.Channel
+	repo        repository.RentCars
+	ch          *amqp.Channel
+	fileStorage storage.Storage
 }
 
 func (c *ClientRentService) PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error) {
@@ -35,6 +38,31 @@ func (c *ClientRentService) GetMyCarParkByCompanyId(userId, companyId int, inDis
 	}
 
 	return cars, nil
+}
+
+func (c *ClientRentService) PostMyCompany(ctx context.Context, userId int, company models.RentMyCompanyCreate) (int, error) {
+	if company.Photo != nil && *company.Photo != "" {
+		fileName, err := utils.GenerateFileName()
+		if err != nil {
+			return 0, err
+		}
+		uploadedFileName, err := c.fileStorage.Upload(ctx, storage.UploadInput{
+			File:   *company.Photo,
+			Name:   fileName,
+			Folder: "companies",
+		})
+		if err != nil {
+			return 0, err
+		}
+		company.Photo = &uploadedFileName
+	}
+
+	companyId, err := c.repo.PostMyCompany(userId, company)
+	if err != nil {
+		return 0, err
+	}
+
+	return companyId, nil
 }
 
 func (c *ClientRentService) GetMyCompanyById(userId, companyId int) (models.CarCompany, error) {
@@ -155,9 +183,10 @@ func (c *ClientRentService) GetCategoriesList(langId int) ([]models.CarCategory,
 	return carCategories, nil
 }
 
-func NewClientRentService(repo repository.RentCars, ch *amqp.Channel) *ClientRentService {
+func NewClientRentService(repo repository.RentCars, ch *amqp.Channel, s storage.Storage) *ClientRentService {
 	return &ClientRentService{
-		repo: repo,
-		ch:   ch,
+		repo:        repo,
+		ch:          ch,
+		fileStorage: s,
 	}
 }
