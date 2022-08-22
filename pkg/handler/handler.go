@@ -81,6 +81,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 						order.POST("/:id/cancel", h.clientCityOrderCancel)
 						order.POST("/:id/going-out", h.clientCityOrderGoingOut)
 						order.POST("/:id/rate", h.clientCityOrderRate)
+						order.POST("/:id/change-order-points", h.clientCityOrderChange)
 					}
 				}
 				rentCategories := protected.Group("/rent-categories")
