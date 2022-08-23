@@ -291,6 +291,12 @@ func (h *Handler) rentAnnouncementUpdate(c *gin.Context) {
 		return
 	}
 
+	carId, err := strconv.Atoi(c.Param("car_id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid car_id param")
+		return
+	}
+
 	var car models.CarCreate
 	if err := c.Bind(&car); err != nil {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
@@ -301,7 +307,7 @@ func (h *Handler) rentAnnouncementUpdate(c *gin.Context) {
 		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
-	carId, err := h.services.RentCars.PostMyCar(c.Request.Context(), userId, myCompanyId, car)
+	carId, err = h.services.RentCars.PutMyCar(c.Request.Context(), userId, carId, myCompanyId, car)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return

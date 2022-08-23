@@ -49,6 +49,29 @@ func (r *RentCarsPostgres) PostMyCar(userId, companyId int, car models.CarCreate
 	return carId, nil
 }
 
+func (r *RentCarsPostgres) PutMyCar(userId, carId, companyId int, car models.CarCreate) (int, error) {
+	var regionId int
+	var updatedCarId int
+
+	details := utils.CheckForNil(car)
+
+	q := fmt.Sprintf(`SELECT region_id FROM %s WHERE id=$1`, districtsTable)
+	qRow := r.dash.QueryRow(q, details["DistrictId"])
+	err := qRow.Scan(&regionId)
+	if err != nil {
+		return 0, err
+	}
+	query := fmt.Sprintf("UPDATE %s SET conditioner=$1, photo=$2, description=$3, price=$4, phone_number=$5, status=$6, car_marka_id=$7, car_model_id=$8, category_car_id=$9, color_id=$10, district_id=$11, fc_type_id=$12, per_car_id=$13, rent_car_company_id=$14, discount=$15, in_discount=$16, transmission_id=$17, consumption_fuel=$18, region_id=$19 WHERE id=$20 RETURNING id", carsTable)
+
+	row := r.dash.QueryRow(query, details["Conditioner"], details["Photo"], details["Description"], details["Price"], details["PhoneNumber"], true, details["MarkId"], details["ModelId"], details["CategoryId"], details["ColorId"], details["DistrictId"], details["FCTypeId"], details["PerCarId"], companyId, 0, false, details["TransmissionId"], details["ConsumptionFuel"], regionId, carId)
+	err = row.Scan(&updatedCarId)
+	if err != nil {
+		return 0, err
+	}
+
+	return updatedCarId, nil
+}
+
 func (r *RentCarsPostgres) PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (rentId int, err error) {
 	details := utils.CheckForNil(rentCarDetails)
 
