@@ -31,10 +31,23 @@ func (r *AuthPostgres) CreateClient(user models.Client, userId int) error {
 		return err
 	}
 
+	var surname, birthdate any
+
+	if user.Surname == nil {
+		surname = nil
+	} else {
+		surname = *user.Surname
+	}
+	if user.Birthdate == nil {
+		birthdate = nil
+	} else {
+		birthdate = *user.Birthdate
+	}
+
 	if usr.ClientId == nil || err == sql.ErrNoRows {
 		var id int
 		query := fmt.Sprintf("INSERT INTO %s (name, surname, birthdate, gender, avatar) values ($1,$2,$3,$4,$5) RETURNING id", clientsTable)
-		row := tx.QueryRow(query, user.Name, user.Surname, user.Birthdate, user.Gender, user.Avatar)
+		row := tx.QueryRow(query, user.Name, surname, birthdate, user.Gender, user.Avatar)
 		if err = row.Scan(&id); err != nil {
 			tx.Rollback()
 			return err
