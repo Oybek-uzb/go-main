@@ -276,6 +276,38 @@ func (h *Handler) rentAnnouncementCreate(c *gin.Context) {
 	newSuccessResponse(c, http.StatusOK, carId)
 }
 
+func (h *Handler) rentAnnouncementUpdate(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	myCompanyId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid company_id param")
+		return
+	}
+
+	var car models.CarCreate
+	if err := c.Bind(&car); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = car.ValidateCarCreate()
+	if err != nil {
+		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	carId, err := h.services.RentCars.PostMyCar(c.Request.Context(), userId, myCompanyId, car)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	newSuccessResponse(c, http.StatusOK, carId)
+}
+
 func (h *Handler) myCarPark(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
