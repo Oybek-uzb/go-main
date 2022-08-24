@@ -209,6 +209,21 @@ func (h *Handler) driverGetMe(c *gin.Context) {
 	}
 	newSuccessResponse(c, http.StatusOK, driver)
 }
+
+func (h *Handler) driverGetTodayInfo(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	driver, err := h.services.GetDriver(userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, "driver not found")
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, driver)
+}
+
 func (h *Handler) driverVerification(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {

@@ -134,6 +134,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 				{
 					authProtected.POST("/sign-up", h.driverSignUp)
 					authProtected.GET("/me", h.driverGetMe)
+					//authProtected.GET("/me", h.driverGetTodayInfo)
 					authProtected.POST("/update", h.driverUpdate)
 					authProtected.GET("/verification", h.driverVerification)
 					authProtected.POST("/sign-up/send-for-moderating", h.driverSignUpSendForModerating)
