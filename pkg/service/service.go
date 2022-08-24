@@ -115,6 +115,7 @@ type RentCars interface {
 	PostMyCompany(ctx context.Context, userId int, company models.RentMyCompanyCreate) (int, error)
 	PostMyCar(ctx context.Context, userId, companyId int, car models.CarCreate) (int, error)
 	PutMyCar(ctx context.Context, userId, carId, companyId int, car models.CarCreate) (int, error)
+	DeleteMyCar(userId, carId, myCompanyId int) (int, error)
 }
 
 type Service struct {

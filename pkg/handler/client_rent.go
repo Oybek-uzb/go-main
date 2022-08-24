@@ -316,6 +316,34 @@ func (h *Handler) rentAnnouncementUpdate(c *gin.Context) {
 	newSuccessResponse(c, http.StatusOK, carId)
 }
 
+func (h *Handler) rentAnnouncementDelete(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	myCompanyId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid company_id param")
+		return
+	}
+
+	carId, err := strconv.Atoi(c.Param("car_id"))
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, "invalid car_id param")
+		return
+	}
+
+	carId, err = h.services.RentCars.DeleteMyCar(userId, carId, myCompanyId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	newSuccessResponse(c, http.StatusOK, carId)
+}
+
 func (h *Handler) myCarPark(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {

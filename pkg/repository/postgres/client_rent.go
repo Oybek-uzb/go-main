@@ -12,6 +12,19 @@ type RentCarsPostgres struct {
 	dash *sqlx.DB
 }
 
+func (r *RentCarsPostgres) DeleteMyCar(userId, carId, companyId int) (int, error) {
+	var deletedCarId int
+
+	query := fmt.Sprintf(`DELETE FROM %s WHERE id=$1 RETURNING id`, carsTable)
+	row := r.dash.QueryRow(query, carId)
+	err := row.Scan(&deletedCarId)
+	if err != nil {
+		return 0, err
+	}
+
+	return deletedCarId, nil
+}
+
 func (r *RentCarsPostgres) PostMyCompany(userId int, company models.RentMyCompanyCreate) (companyId int, err error) {
 	details := utils.CheckForNil(company)
 	query := fmt.Sprintf("INSERT INTO %s (name, photo, description, web_site, phone_number, status, owner_id) SELECT $1,$2,$3,$4,$5,$6,$7 RETURNING id", carsCompanyTable)

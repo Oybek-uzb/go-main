@@ -113,6 +113,7 @@ type RentCars interface {
 	PostMyCompany(userId int, company models.RentMyCompanyCreate) (int, error)
 	PostMyCar(userId, companyId int, car models.CarCreate) (int, error)
 	PutMyCar(userId, carId, companyId int, car models.CarCreate) (int, error)
+	DeleteMyCar(userId, carId, companyId int) (int, error)
 }
 
 type Repository struct {
