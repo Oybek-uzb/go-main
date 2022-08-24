@@ -115,7 +115,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 							announcement.POST("/", h.rentAnnouncementCreate)
 							announcement.GET("/:car_id", h.myCarByCompanyId)
 							announcement.PUT("/:car_id", h.rentAnnouncementUpdate)
-							//announcement.DELETE("/:announcement_id", h.rentAnnouncementDelete)
+							announcement.DELETE("/:car_id", h.rentAnnouncementDelete)
 						}
 					}
 				}

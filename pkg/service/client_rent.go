@@ -16,6 +16,15 @@ type ClientRentService struct {
 	fileStorage storage.Storage
 }
 
+func (c *ClientRentService) DeleteMyCar(userId, carId, myCompanyId int) (int, error) {
+	carId, err := c.repo.DeleteMyCar(userId, carId, myCompanyId)
+	if err != nil {
+		return 0, err
+	}
+
+	return carId, nil
+}
+
 func (c *ClientRentService) PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error) {
 	carId, err := c.repo.PostRentCarByCarId(userId, carId, rentCarDetails)
 	if err != nil {
