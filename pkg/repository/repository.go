@@ -22,6 +22,7 @@ type Authorization interface {
 	DriverSendCode(login, password string) error
 	CreateOrUpdateDriver(user models.User) (int, error)
 	GetDriver(userId int) (models.Driver, error)
+	GetTodayInfo(userId int, date models.CurrentDate) (models.TodayInfo, error)
 	GetDriverId(userId int) (int, error)
 	GetDriverVerification(userId int) ([]models.DriverVerification, error)
 	GetDriverCar(userId int) (models.DriverCar, error)

@@ -216,12 +216,19 @@ func (h *Handler) driverGetTodayInfo(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	driver, err := h.services.GetDriver(userId)
-	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, "driver not found")
+
+	var input models.CurrentDate
+	if err := c.Bind(&input); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	newSuccessResponse(c, http.StatusOK, driver)
+
+	info, err := h.services.GetTodayInfo(userId, input)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, "info not found")
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, info)
 }
 
 func (h *Handler) driverVerification(c *gin.Context) {

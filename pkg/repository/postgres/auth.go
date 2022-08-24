@@ -18,6 +18,7 @@ type AuthPostgres struct {
 func NewAuthPostgres(db *sqlx.DB, dash *sqlx.DB) *AuthPostgres {
 	return &AuthPostgres{db: db, dash: dash}
 }
+
 func (r *AuthPostgres) CreateClient(user models.Client, userId int) error {
 	tx, err := r.db.Beginx()
 	if err != nil {
@@ -180,7 +181,6 @@ func (r *AuthPostgres) DriverUpdatePhone(userId int, phone string) error {
 
 	return tx.Commit()
 }
-
 func (r *AuthPostgres) CreateOrUpdateClient(user models.User) (int, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
@@ -239,6 +239,7 @@ func (r *AuthPostgres) GetClient(userId int) (models.Client, error) {
 	}
 	return client, nil
 }
+
 func (r *AuthPostgres) GetDriverVerification(userId int) ([]models.DriverVerification, error) {
 	var usr models.User
 	usrQuery := fmt.Sprintf("SELECT driver_id FROM %s WHERE id=$1", usersTable)
@@ -314,6 +315,35 @@ func (r *AuthPostgres) GetDriver(userId int) (models.Driver, error) {
 		driver.DriverLicensePhoto3 = utils.GetFileUrl(strings.Split(*driver.DriverLicensePhoto3, "/"))
 	}
 	return driver, nil
+}
+func (r *AuthPostgres) GetTodayInfo(userId int, date models.CurrentDate) (models.TodayInfo, error) {
+	var todayInfo models.TodayInfo
+
+	queryCount := fmt.Sprintf(`SELECT count(*) FROM %s WHERE driver_id=$1 AND order_status='order_completed' AND created_at >= $2::date AND created_at < ($2::date + '1 day'::interval)`, ordersTable)
+	row := r.db.QueryRow(queryCount, userId, date.Date)
+	err := row.Scan(&todayInfo.CompletedOrdersCount)
+	if err != nil {
+		return models.TodayInfo{}, err
+	}
+
+	var interregionalEarning, cityEarning float32
+	queryEarningInterregional := fmt.Sprintf(`SELECT  COALESCE(SUM(interregional.price), 0) AS earning FROM %s orders LEFT JOIN %s interregional ON orders.order_id=interregional.id WHERE orders.driver_id=$1 AND orders.order_status='order_completed' AND orders.created_at >= $2::date AND orders.created_at < ($2::date + '1 day'::interval) AND orders.order_type='interregional'`, ordersTable, interregionalOrdersTable)
+	row = r.db.QueryRow(queryEarningInterregional, userId, date.Date)
+	err = row.Scan(&interregionalEarning)
+	if err != nil {
+		return models.TodayInfo{}, err
+	}
+
+	queryEarningCity := fmt.Sprintf(`SELECT  COALESCE(SUM(city.price), 0) AS earning FROM %s orders LEFT JOIN %s city ON orders.order_id=city.id WHERE orders.driver_id=$1 AND orders.order_status='order_completed' AND orders.created_at >= $2::date AND orders.created_at < ($2::date + '1 day'::interval) AND orders.order_type='city'`, ordersTable, cityOrdersTable)
+	row = r.db.QueryRow(queryEarningCity, userId, date.Date)
+	err = row.Scan(&cityEarning)
+	if err != nil {
+		return models.TodayInfo{}, err
+	}
+
+	todayInfo.Earning = interregionalEarning + cityEarning
+
+	return todayInfo, nil
 }
 
 func (r *AuthPostgres) GetDriverCar(userId int) (models.DriverCar, error) {

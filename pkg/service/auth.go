@@ -135,6 +135,10 @@ func (s *AuthService) GetClient(userId int) (models.Client, error) {
 func (s *AuthService) GetDriver(userId int) (models.Driver, error) {
 	return s.repo.GetDriver(userId)
 }
+
+func (s *AuthService) GetTodayInfo(userId int, date models.CurrentDate) (models.TodayInfo, error) {
+	return s.repo.GetTodayInfo(userId, date)
+}
 func (s *AuthService) GetDriverId(userId int) (int, error) {
 	return s.repo.GetDriverId(userId)
 }

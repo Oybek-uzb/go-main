@@ -25,6 +25,7 @@ type Authorization interface {
 	SendForModerating(userId int) error
 	UpdateDriverCar(ctx context.Context, car models.DriverCar, userId int) error
 	GetDriver(userId int) (models.Driver, error)
+	GetTodayInfo(userId int, date models.CurrentDate) (models.TodayInfo, error)
 	GetDriverId(userId int) (int, error)
 	GetDriverVerification(userId int) ([]models.DriverVerification, error)
 	GetDriverCar(userId int) (models.DriverCar, error)

@@ -62,6 +62,15 @@ type Driver struct {
 	DriverLicensePhoto3     *string  `json:"driver_license_photo3" form:"driver_license_photo3" db:"driver_license_photo3"`
 }
 
+type TodayInfo struct {
+	CompletedOrdersCount int     `json:"completed_orders_count" db:"count"`
+	Earning              float32 `json:"earning" db:"earning"'`
+}
+
+type CurrentDate struct {
+	Date string `json:"date" form:"date" db:"date"`
+}
+
 type DriverVerification struct {
 	Id          int    `json:"-"`
 	Description string `json:"description"`
