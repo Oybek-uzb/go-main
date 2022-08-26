@@ -15,6 +15,7 @@ type Car struct {
 	ModelName        *string `json:"model_name" db:"model_name"`
 	CategoryName     *string `json:"category_name" db:"category_name"`
 	ColorName        *string `json:"color_name" db:"color_name"`
+	ColorHexCode     *string `json:"color_hex_code" db:"hex_code"`
 	DistrictName     *string `json:"district_name" db:"district_name"`
 	RegionName       *string `json:"region_name" db:"region_name"`
 	CompanyName      *string `json:"company_name" db:"company_name"`
