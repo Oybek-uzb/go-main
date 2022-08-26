@@ -5,6 +5,7 @@ import (
 	"abir/pkg/utils"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"strings"
 )
 
 type RentCarsPostgres struct {
@@ -136,10 +137,23 @@ func (r *RentCarsPostgres) GetMyCompaniesList(userId int) ([]models.CarCompany, 
 func (r *RentCarsPostgres) GetCarByCompanyIdCarId(companyId, carId, langId int) (models.Car, error) {
 	var car models.Car
 
-	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.conditioner, car.description, car.phone_number, car.in_discount, car.discount, per_type.name per_type_name, fc_type_lang.name fc_type_name, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id LEFT JOIN %[4]s fc_type ON car.fc_type_id = fc_type.id LEFT JOIN %[5]s fc_type_lang ON fc_type.id = fc_type_lang.fc_type_id LEFT JOIN %[6]s per_type ON car.per_car_id = per_type.id LEFT JOIN %[7]s per_type_lang ON per_type.id = per_type_lang.per_car_id WHERE per_type_lang.language_id = $3 AND fc_type_lang.language_id = $3 AND car.rent_car_company_id = $1 AND car.id = $2`, carsTable, carsModelTable, carsCompanyTable, fcTypeTable, fcTypeTableLang, perTypeTable, perTypeTableLang)
+	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.conditioner, car.description, car.phone_number, car.in_discount, car.discount, per_type.name per_type_name, fc_type_lang.name fc_type_name, model.name model_name, company.name company_name, car.consumption_fuel FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id LEFT JOIN %[4]s fc_type ON car.fc_type_id = fc_type.id LEFT JOIN %[5]s fc_type_lang ON fc_type.id = fc_type_lang.fc_type_id LEFT JOIN %[6]s per_type ON car.per_car_id = per_type.id LEFT JOIN %[7]s per_type_lang ON per_type.id = per_type_lang.per_car_id WHERE per_type_lang.language_id = $3 AND fc_type_lang.language_id = $3 AND car.rent_car_company_id = $1 AND car.id = $2`, carsTable, carsModelTable, carsCompanyTable, fcTypeTable, fcTypeTableLang, perTypeTable, perTypeTableLang)
 	err := r.dash.Get(&car, query, companyId, carId, langId)
 	if err != nil {
 		return models.Car{}, err
+	}
+
+	if car.ConsumptionFuel != nil {
+		var res string
+		conFuel := strings.Split(*car.ConsumptionFuel, "/")
+
+		if langId == 2 {
+			res = conFuel[0] + "л/" + conFuel[1] + "км"
+		} else {
+			res = conFuel[0] + "l/" + conFuel[1] + "km"
+		}
+
+		car.ConsumptionFuel = &res
 	}
 
 	return car, err
@@ -178,10 +192,23 @@ func (r *RentCarsPostgres) GetCompaniesList() ([]models.CarCompany, error) {
 func (r *RentCarsPostgres) GetCarByCategoryIdCarId(categoryId, carId, langId int) (models.Car, error) {
 	var car models.Car
 
-	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.conditioner, car.description, car.phone_number, car.discount, car.in_discount, per_type_lang.name per_type_name, fc_type_lang.name fc_type_name, model.name model_name, company.name company_name, transmission_type_lang.name transmission_name, color_lang.name color_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id LEFT JOIN %[4]s fc_type ON car.fc_type_id = fc_type.id LEFT JOIN %[5]s fc_type_lang ON fc_type.id = fc_type_lang.fc_type_id LEFT JOIN %[6]s per_type ON car.per_car_id = per_type.id LEFT JOIN %[7]s per_type_lang ON per_type.id = per_type_lang.per_car_id LEFT JOIN %[8]s transmission_type ON car.transmission_id = transmission_type.id LEFT JOIN %[9]s transmission_type_lang ON transmission_type.id=transmission_type_lang.transmission_id LEFT JOIN %[10]s color ON car.color_id = color.id LEFT JOIN %[11]s color_lang ON color.id=color_lang.color_id WHERE per_type_lang.language_id = $3 AND fc_type_lang.language_id = $3 AND car.category_car_id = $1 AND car.id = $2 AND color_lang.language_id = $3 AND transmission_type_lang.language_id=$3`, carsTable, carsModelTable, carsCompanyTable, fcTypeTable, fcTypeTableLang, perTypeTable, perTypeTableLang, transmissionTypeTable, transmissionTypeTableLang, colorsTable, colorsLangTable)
+	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.conditioner, car.description, car.phone_number, car.discount, car.in_discount, per_type_lang.name per_type_name, fc_type_lang.name fc_type_name, model.name model_name, company.name company_name, transmission_type_lang.name transmission_name, color_lang.name color_name, car.consumption_fuel FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id LEFT JOIN %[4]s fc_type ON car.fc_type_id = fc_type.id LEFT JOIN %[5]s fc_type_lang ON fc_type.id = fc_type_lang.fc_type_id LEFT JOIN %[6]s per_type ON car.per_car_id = per_type.id LEFT JOIN %[7]s per_type_lang ON per_type.id = per_type_lang.per_car_id LEFT JOIN %[8]s transmission_type ON car.transmission_id = transmission_type.id LEFT JOIN %[9]s transmission_type_lang ON transmission_type.id=transmission_type_lang.transmission_id LEFT JOIN %[10]s color ON car.color_id = color.id LEFT JOIN %[11]s color_lang ON color.id=color_lang.color_id WHERE per_type_lang.language_id = $3 AND fc_type_lang.language_id = $3 AND car.category_car_id = $1 AND car.id = $2 AND color_lang.language_id = $3 AND transmission_type_lang.language_id=$3`, carsTable, carsModelTable, carsCompanyTable, fcTypeTable, fcTypeTableLang, perTypeTable, perTypeTableLang, transmissionTypeTable, transmissionTypeTableLang, colorsTable, colorsLangTable)
 	err := r.dash.Get(&car, query, categoryId, carId, langId)
 	if err != nil {
 		return models.Car{}, err
+	}
+
+	if car.ConsumptionFuel != nil {
+		var res string
+		conFuel := strings.Split(*car.ConsumptionFuel, "/")
+
+		if langId == 2 {
+			res = conFuel[0] + "л/" + conFuel[1] + "км"
+		} else {
+			res = conFuel[0] + "l/" + conFuel[1] + "km"
+		}
+
+		car.ConsumptionFuel = &res
 	}
 
 	return car, err

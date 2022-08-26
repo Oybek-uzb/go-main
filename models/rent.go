@@ -23,6 +23,7 @@ type Car struct {
 	InDiscount       bool    `json:"in_discount" db:"in_discount"`
 	Discount         *int    `json:"discount" db:"discount"`
 	TransmissionName *string `json:"transmission_name" db:"transmission_name"`
+	ConsumptionFuel  *string `json:"consumption_fuel" db:"consumption_fuel"`
 }
 
 type CarCreate struct {
