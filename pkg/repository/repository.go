@@ -3,6 +3,7 @@ package repository
 import (
 	"abir/models"
 	"abir/pkg/repository/postgres"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -102,6 +103,7 @@ type DriverSettings interface {
 
 type RentCars interface {
 	GetCategoriesList(langId int) ([]models.CarCategory, error)
+	GetCategoriesForEvents(langId int) ([]models.CarCategory, error)
 	GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error)
 	GetCarByCategoryIdCarId(categoryId, carId, langId int) (models.Car, error)
 	PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error)

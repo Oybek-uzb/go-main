@@ -6,8 +6,9 @@ import (
 	"abir/pkg/storage"
 	"abir/pkg/utils"
 	"context"
-	"github.com/streadway/amqp"
 	"strings"
+
+	"github.com/streadway/amqp"
 )
 
 type ClientRentService struct {
@@ -229,6 +230,21 @@ func (c *ClientRentService) GetCarsByCategoryId(categoryId int) ([]models.CarByC
 
 func (c *ClientRentService) GetCategoriesList(langId int) ([]models.CarCategory, error) {
 	carCategories, err := c.repo.GetCategoriesList(langId)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, category := range carCategories {
+		if category.Photo != nil {
+			carCategories[i].Photo = utils.GetFileUrl(strings.Split(*category.Photo, "/"))
+		}
+	}
+
+	return carCategories, nil
+}
+
+func (c *ClientRentService) GetCategoriesForEvents(langId int) ([]models.CarCategory, error) {
+	carCategories, err := c.repo.GetCategoriesForEvents(langId)
 	if err != nil {
 		return nil, err
 	}

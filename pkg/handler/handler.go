@@ -2,6 +2,7 @@ package handler
 
 import (
 	"abir/pkg/service"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -97,6 +98,12 @@ func (h *Handler) InitRoutes() *gin.Engine {
 					rentCompanies.GET("/:id", h.rentCompanyById)
 					rentCompanies.GET("/:id/:car_id", h.rentCarByCompanyIdCarId)
 					rentCompanies.POST("/:id/:car_id", h.rentCarFromCompanyCreate)
+				}
+
+				rentForEvents := protected.Group("/rent-for-events")
+				{
+					rentForEvents.GET("/categories", h.rentForEventsCategories)
+					// rentForEvents.GET("/my-announcements", h.rentForEventsMyAnn)
 				}
 
 				rent := protected.Group("/rent")

@@ -4,8 +4,9 @@ import (
 	"abir/models"
 	"abir/pkg/utils"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type RentCarsPostgres struct {
@@ -218,10 +219,19 @@ func (r *RentCarsPostgres) GetCarByCategoryIdCarId(categoryId, carId, langId int
 func (r *RentCarsPostgres) GetCategoriesList(langId int) ([]models.CarCategory, error) {
 	var categoriesList []models.CarCategory
 
-	categoriesListQuery := fmt.Sprintf(`SELECT car_category.id, car_category.photo, car_category_lang.name FROM %[1]s car_category LEFT JOIN %[2]s car_category_lang ON car_category.id = car_category_lang.category_car_id WHERE car_category_lang.language_id=$1`, carCategoryTable, carCategoryTableLang)
+	categoriesListQuery := fmt.Sprintf(`SELECT car_category.id, car_category.photo, car_category_lang.name FROM %[1]s car_category LEFT JOIN %[2]s car_category_lang ON car_category.id = car_category_lang.category_car_id WHERE car_category_lang.language_id=$1 AND car_category.car_type='for_events'`, carCategoryTable, carCategoryTableLang)
 	err := r.dash.Select(&categoriesList, categoriesListQuery, langId)
 
 	return categoriesList, err
+}
+
+func (r *RentCarsPostgres) GetCategoriesForEvents(langId int) ([]models.CarCategory, error) {
+	var categories []models.CarCategory
+
+	categoriesListQuery := fmt.Sprintf(`SELECT car_category.id, car_category.photo, car_category_lang.name FROM %[1]s car_category LEFT JOIN %[2]s car_category_lang ON car_category.id = car_category_lang.category_car_id WHERE car_category_lang.language_id=$1`, carCategoryTable, carCategoryTableLang)
+	err := r.dash.Select(&categories, categoriesListQuery, langId)
+
+	return categories, err
 }
 
 func (r *RentCarsPostgres) GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error) {

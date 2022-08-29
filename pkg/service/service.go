@@ -5,6 +5,7 @@ import (
 	"abir/pkg/repository"
 	"abir/pkg/storage"
 	"context"
+
 	"github.com/go-redis/redis"
 	"github.com/streadway/amqp"
 )
@@ -104,6 +105,7 @@ type DriverSettings interface {
 
 type RentCars interface {
 	GetCategoriesList(langId int) ([]models.CarCategory, error)
+	GetCategoriesForEvents(langId int) ([]models.CarCategory, error)
 	GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error)
 	GetCarByCategoryIdCarId(categoryId, carId, langId int) (models.Car, error)
 	PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error)

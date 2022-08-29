@@ -3,9 +3,10 @@ package handler
 import (
 	"abir/models"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) rentCategoriesList(c *gin.Context) {
@@ -26,6 +27,26 @@ func (h *Handler) rentCategoriesList(c *gin.Context) {
 		return
 	}
 	newSuccessResponse(c, http.StatusOK, lists)
+}
+
+func (h *Handler) rentForEventsCategories(c *gin.Context) {
+	_, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+
+	list, err := h.services.RentCars.GetCategoriesForEvents(langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, list)
 }
 
 func (h *Handler) rentCarsByCategoryId(c *gin.Context) {
