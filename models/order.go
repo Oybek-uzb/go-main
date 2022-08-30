@@ -44,6 +44,7 @@ type Ride struct {
 	Comments       *string               `json:"comments" form:"comments" db:"comments"`
 	ViewCount      int                   `json:"view_count" db:"view_count"`
 	Status         string                `json:"status" db:"status"`
+	Waypoint       *string               `json:"waypoint" form:"waypoint" db:"waypoint"`
 	Notifications  *[]RideNotification   `json:"notifications,omitempty"`
 	OrderList      *[]InterregionalOrder `json:"order_list,omitempty"`
 	CreatedAt      string                `json:"created_at" db:"created_at"`
@@ -139,6 +140,8 @@ type InterregionalOrder struct {
 	RideId         int     `json:"ride_id,omitempty" db:"ride_id"`
 	FromDistrictId string  `json:"from_district_id,omitempty" db:"from_district_id"`
 	ToDistrictId   string  `json:"to_district_id,omitempty" db:"to_district_id"`
+	FromDistrict   *string `json:"from_district,omitempty"`
+	ToDistrict     *string `json:"to_district,omitempty"`
 	Price          float32 `json:"price,omitempty" db:"price"`
 	PassengerCount int     `json:"passenger_count" db:"passenger_count"`
 	DepartureDate  string  `json:"departure_date,omitempty" db:"departure_date"`
@@ -238,6 +241,8 @@ func (a Ride) ValidateSearch() error {
 
 func (a Ride) ValidateBook() error {
 	return validation.ValidateStruct(&a,
+		validation.Field(&a.FromDistrictId, validation.Required, is.Digit),
+		validation.Field(&a.ToDistrictId, validation.Required, is.Digit),
 		validation.Field(&a.PassengerCount, validation.Required, is.Int),
 		validation.Field(&a.Comments, validation.NilOrNotEmpty, validation.Length(3, 200)),
 	)
