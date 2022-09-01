@@ -88,6 +88,16 @@ type CarByCompanyId struct {
 	Discount    *int    `json:"discount" db:"discount"`
 }
 
+type MyCarForEvents struct {
+	Id         int     `json:"id" db:"id"`
+	MarkName   *string `json:"mark_name" db:"mark_name"`
+	Photo      *string `json:"photo" db:"photo"`
+	Price      int     `json:"price" db:"price"`
+	InDiscount bool    `json:"in_discount" db:"in_discount"`
+	Discount   *int    `json:"discount" db:"discount"`
+	PerCarName *string `json:"per_type_name" db:"per_type_name"`
+}
+
 type RentMyCompanyCreate struct {
 	Id          int     `json:"id" db:"id"`
 	Photo       *string `json:"photo" db:"photo" form:"photo"`

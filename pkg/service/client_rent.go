@@ -153,6 +153,21 @@ func (c *ClientRentService) GetMyCompaniesList(userId int) ([]models.CarCompany,
 	return myCompanies, nil
 }
 
+func (c *ClientRentService) GetMyCarsForEvents(userId, langId int) ([]models.MyCarForEvents, error) {
+	myCars, err := c.repo.GetMyCarsForEvents(userId, langId)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, company := range myCars {
+		if company.Photo != nil {
+			myCars[i].Photo = utils.GetFileUrl(strings.Split(*company.Photo, "/"))
+		}
+	}
+
+	return myCars, nil
+}
+
 func (c *ClientRentService) GetCarByCompanyIdCarId(companyId, carId, langId int) (models.Car, error) {
 	car, err := c.repo.GetCarByCompanyIdCarId(companyId, carId, langId)
 	if err != nil {

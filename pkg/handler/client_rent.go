@@ -220,6 +220,26 @@ func (h *Handler) myCompaniesList(c *gin.Context) {
 	newSuccessResponse(c, http.StatusOK, myCompanies)
 }
 
+func (h *Handler) rentForEventsMyCars(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	langId, err := getLangId(c)
+	if err != nil {
+		return
+	}
+
+	myCars, err := h.services.RentCars.GetMyCarsForEvents(userId, langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	newSuccessResponse(c, http.StatusOK, myCars)
+}
+
 func (h *Handler) myCompanyById(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {

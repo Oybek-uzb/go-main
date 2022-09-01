@@ -135,6 +135,15 @@ func (r *RentCarsPostgres) GetMyCompaniesList(userId int) ([]models.CarCompany, 
 	return companiesList, err
 }
 
+func (r *RentCarsPostgres) GetMyCarsForEvents(userId, langId int) ([]models.MyCarForEvents, error) {
+	var myCars []models.MyCarForEvents
+
+	myCarsQuery := fmt.Sprintf(`SELECT car.id, car_mark.name mark_name, car.photo, car.price, car.in_discount, car.discount, per_car_lang.name per_type_name FROM %s car LEFT JOIN %s car_mark ON car.car_marka_id=car_mark.id LEFT JOIN %s per_car ON per_car.id=car.per_car_id LEFT JOIN %s per_car_lang ON per_car_lang.per_car_id=per_car.id WHERE owner_id = $1 AND per_car_lang.language_id=$2`, carsTable, carMarkasTable, perTypeTable, perTypeTableLang)
+	err := r.dash.Select(&myCars, myCarsQuery, userId, langId)
+
+	return myCars, err
+}
+
 func (r *RentCarsPostgres) GetCarByCompanyIdCarId(companyId, carId, langId int) (models.Car, error) {
 	var car models.Car
 
@@ -185,7 +194,7 @@ func (r *RentCarsPostgres) GetCarsByCompanyId(companyId int) (models.CarCompanyD
 func (r *RentCarsPostgres) GetCompaniesList() ([]models.CarCompany, error) {
 	var companiesList []models.CarCompany
 
-	categoriesListQuery := fmt.Sprintf(`SELECT id, name, photo FROM %s WHERE status='checked'`, carsCompanyTable)
+	categoriesListQuery := fmt.Sprintf(`SELECT id, name, photo CarByCompanyIdFROM %s WHERE status='checked'`, carsCompanyTable)
 	err := r.dash.Select(&companiesList, categoriesListQuery)
 
 	return companiesList, err
@@ -219,7 +228,7 @@ func (r *RentCarsPostgres) GetCarByCategoryIdCarId(categoryId, carId, langId int
 func (r *RentCarsPostgres) GetCategoriesList(langId int) ([]models.CarCategory, error) {
 	var categoriesList []models.CarCategory
 
-	categoriesListQuery := fmt.Sprintf(`SELECT car_category.id, car_category.photo, car_category_lang.name FROM %[1]s car_category LEFT JOIN %[2]s car_category_lang ON car_category.id = car_category_lang.category_car_id WHERE car_category_lang.language_id=$1 AND car_category.car_type='for_events'`, carCategoryTable, carCategoryTableLang)
+	categoriesListQuery := fmt.Sprintf(`SELECT car_category.id, car_category.photo, car_category_lang.name FROM %[1]s car_category LEFT JOIN %[2]s car_category_lang ON car_category.id = car_category_lang.category_car_id WHERE car_category_lang.language_id=$1 AND car_category.car_type='rent_car'`, carCategoryTable, carCategoryTableLang)
 	err := r.dash.Select(&categoriesList, categoriesListQuery, langId)
 
 	return categoriesList, err
@@ -228,7 +237,7 @@ func (r *RentCarsPostgres) GetCategoriesList(langId int) ([]models.CarCategory, 
 func (r *RentCarsPostgres) GetCategoriesForEvents(langId int) ([]models.CarCategory, error) {
 	var categories []models.CarCategory
 
-	categoriesListQuery := fmt.Sprintf(`SELECT car_category.id, car_category.photo, car_category_lang.name FROM %[1]s car_category LEFT JOIN %[2]s car_category_lang ON car_category.id = car_category_lang.category_car_id WHERE car_category_lang.language_id=$1`, carCategoryTable, carCategoryTableLang)
+	categoriesListQuery := fmt.Sprintf(`SELECT car_category.id, car_category.photo, car_category_lang.name FROM %[1]s car_category LEFT JOIN %[2]s car_category_lang ON car_category.id = car_category_lang.category_car_id WHERE car_category_lang.language_id=$1 AND car_category.car_type='for_events'`, carCategoryTable, carCategoryTableLang)
 	err := r.dash.Select(&categories, categoriesListQuery, langId)
 
 	return categories, err

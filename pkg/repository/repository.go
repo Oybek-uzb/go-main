@@ -103,7 +103,6 @@ type DriverSettings interface {
 
 type RentCars interface {
 	GetCategoriesList(langId int) ([]models.CarCategory, error)
-	GetCategoriesForEvents(langId int) ([]models.CarCategory, error)
 	GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error)
 	GetCarByCategoryIdCarId(categoryId, carId, langId int) (models.Car, error)
 	PostRentCarByCarId(userId, carId int, rentCarDetails models.RentCarDetails) (int, error)
@@ -117,6 +116,9 @@ type RentCars interface {
 	PostMyCar(userId, companyId int, car models.CarCreate) (int, error)
 	PutMyCar(userId, carId, companyId int, car models.CarCreate) (int, error)
 	DeleteMyCar(userId, carId, companyId int) (int, error)
+
+	GetCategoriesForEvents(langId int) ([]models.CarCategory, error)
+	GetMyCarsForEvents(userId, langId int) ([]models.MyCarForEvents, error)
 }
 
 type Repository struct {
