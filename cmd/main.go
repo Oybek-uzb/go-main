@@ -9,9 +9,18 @@ import (
 	"abir/pkg/service"
 	"abir/pkg/storage"
 	"flag"
+
 	"github.com/streadway/amqp"
+
 	//ps "abir/proto/proto"
 	"context"
+	"io"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
+
 	"github.com/go-redis/redis"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -19,12 +28,6 @@ import (
 	_ "github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"io"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
 )
 
 var rootPath *string
@@ -118,6 +121,9 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("failed to initialize public db: %s", err.Error())
 	}
+
+	// firebaseApp := firebase.App{}
+
 	repos := repository.NewRepository(dashboardDb, publicDb)
 	services := service.NewService(repos, redisClient, minioStorage, ch)
 	handlers := handler.NewHandler(services)

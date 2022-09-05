@@ -3,8 +3,9 @@ package handler
 import (
 	"abir/models"
 	"abir/pkg/utils"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) clientSignUp(c *gin.Context) {
@@ -246,8 +247,9 @@ func (h *Handler) driverVerification(c *gin.Context) {
 }
 
 type signInInput struct {
-	Login    string `json:"login" form:"login" binding:"required"`
-	Password string `json:"password" form:"password" binding:"required"`
+	Login         string `json:"login" form:"login" binding:"required"`
+	Password      string `json:"password" form:"password" binding:"required"`
+	FirebaseToken string `json:"firebase_token" form:"firebase_token" binding:"required"`
 }
 
 func (h *Handler) clientSignIn(c *gin.Context) {
@@ -267,6 +269,13 @@ func (h *Handler) clientSignIn(c *gin.Context) {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	err = h.services.PutFirebaseToken(userId, input.FirebaseToken)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	client, err := h.services.GetClient(userId)
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"token":      token,

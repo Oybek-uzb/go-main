@@ -15,6 +15,7 @@ type Authorization interface {
 	ClientSendCode(login, password string) error
 	ClientCheckPhone(phone string) error
 	ClientUpdatePhone(userId int, phone string) error
+	PutFirebaseToken(userId int, firebaseToken string) error
 
 	CreateDriver(user models.Driver, userId int) error
 	UpdateDriver(user models.Driver, userId int) error

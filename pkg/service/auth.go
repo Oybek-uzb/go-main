@@ -9,12 +9,13 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/go-redis/redis"
-	"github.com/spf13/viper"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/go-redis/redis"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -519,4 +520,8 @@ func (s *AuthService) UpdateDriverCar(ctx context.Context, car models.DriverCar,
 		car.CarBaggage = &uploadedFileName
 	}
 	return s.repo.UpdateDriverCar(car, userId)
+}
+
+func (s *AuthService) PutFirebaseToken(userId int, firebaseToken string) error {
+	return s.repo.PutFirebaseToken(userId, firebaseToken)
 }

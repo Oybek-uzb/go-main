@@ -19,6 +19,7 @@ type Authorization interface {
 	ClientSendActivationCode(userId int, phone string) error
 	DriverSendActivationCode(userId int, phone string) error
 	ClientUpdatePhone(userId int, phone, code string) error
+	PutFirebaseToken(userId int, firebaseToken string) error
 
 	DriverSendCode(login string) error
 	CreateDriver(ctx context.Context, user models.Driver, userId int) error
