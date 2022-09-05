@@ -38,7 +38,7 @@ func (r *ClientOrdersPostgres) RideList(ride models.Ride, langId, page int) ([]m
 	listQuery := fmt.Sprintf("SELECT id as ride_id,driver_id,from_district_id,to_district_id,"+
 		"CASE WHEN from_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $6 AND dl.language_id = $5) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = from_district_id AND dl.language_id = $5) END as from_district, "+
 		"CASE WHEN to_district_id = 0 THEN (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_region d LEFT JOIN dashboard.dictionary_region_i18n dl on d.id = dl.region_id WHERE d.id = $6 AND dl.language_id = $5) ELSE (select COALESCE(dl.name, d.name) as name FROM dashboard.dictionary_district d LEFT JOIN dashboard.dictionary_district_i18n dl on d.id = dl.district_id WHERE d.id = to_district_id AND dl.language_id = $5) END as to_district, "+
-		"to_char(departure_date, 'HH24:MI') as departure_time,price,passenger_count,comments,status FROM %s WHERE departure_date::date = $1 AND departure_date::timestamp > NOW() AND from_district_id = $2 AND to_district_id = $3 AND status = $4 ORDER BY departure_date DESC LIMIT $7 OFFSET $8", ridesTable)
+		"to_char(departure_date, 'HH24:MI') as departure_time,price,passenger_count,comments,status FROM %s WHERE departure_date::date = $1 AND departure_date::timestamp > NOW() AND $2=ANY(waypoint) AND $3=ANY(waypoint) AND status = $4 ORDER BY departure_date DESC LIMIT $7 OFFSET $8", ridesTable)
 	err = r.db.Select(&lists, listQuery, ride.DepartureDate, ride.FromDistrictId, ride.ToDistrictId, "new", langId, viper.GetString("vars.capital_id"), limit, offset)
 	return lists, pagination, err
 }
@@ -96,8 +96,8 @@ func (r *ClientOrdersPostgres) RideSingleBook(bookRide models.Ride, rideId, user
 		return 0, err
 	}
 	var ride models.Ride
-	rideQuery := fmt.Sprintf("SELECT from_district_id,to_district_id,price,departure_date FROM %s WHERE id=$1", ridesTable)
-	err = tx.Get(&ride, rideQuery, rideId)
+	rideQuery := fmt.Sprintf("SELECT from_district_id,to_district_id,price,departure_date FROM %s WHERE id=$1 AND $2=ANY(waypoint) AND $3=ANY(waypoint)", ridesTable)
+	err = tx.Get(&ride, rideQuery, rideId, bookRide.FromDistrictId, bookRide.ToDistrictId)
 	if err != nil {
 		tx.Rollback()
 		return 0, err
@@ -124,7 +124,7 @@ func (r *ClientOrdersPostgres) RideSingleBook(bookRide models.Ride, rideId, user
 	}
 	var subOrderId int
 	query := fmt.Sprintf("INSERT INTO %s (ride_id, from_district_id,to_district_id,price,passenger_count,departure_date,comments) SELECT $1,$2,$3,$4,$5,$6,$7 RETURNING id", interregionalOrdersTable)
-	row := tx.QueryRow(query, rideId, ride.FromDistrictId, ride.ToDistrictId, price*passengerCnt, bookRide.PassengerCount, ride.DepartureDate, bookRide.Comments)
+	row := tx.QueryRow(query, rideId, bookRide.FromDistrictId, bookRide.ToDistrictId, price*passengerCnt, bookRide.PassengerCount, ride.DepartureDate, bookRide.Comments)
 	if err := row.Scan(&subOrderId); err != nil {
 		return 0, err
 	}

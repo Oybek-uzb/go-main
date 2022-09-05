@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -21,8 +22,13 @@ func NewDriverOrdersPostgres(db *sqlx.DB, dash *sqlx.DB) *DriverOrdersPostgres {
 
 func (r *DriverOrdersPostgres) CreateRide(ride models.Ride, userId int) (int, error) {
 	var id int
-	createQuery := fmt.Sprintf("INSERT INTO %s (driver_id, from_district_id, to_district_id, departure_date, price, passenger_count, comments, status) SELECT $1,$2,$3,$4,$5,$6,$7,$8 WHERE NOT EXISTS (SELECT id FROM %s WHERE status = $8 AND driver_id = $1) RETURNING id", ridesTable, ridesTable)
-	row := r.db.QueryRow(createQuery, userId, ride.FromDistrictId, ride.ToDistrictId, ride.DepartureDate, ride.Price, ride.PassengerCount, ride.Comments, "new")
+	waypoint := "{}"
+	if ride.Waypoint != nil {
+		waypoint = *ride.Waypoint
+	}
+	logrus.Print(waypoint)
+	createQuery := fmt.Sprintf("INSERT INTO %s (driver_id, from_district_id, to_district_id, departure_date, price, passenger_count, comments, status, waypoint) SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9 WHERE NOT EXISTS (SELECT id FROM %s WHERE status = $8 AND driver_id = $1) RETURNING id", ridesTable, ridesTable)
+	row := r.db.QueryRow(createQuery, userId, ride.FromDistrictId, ride.ToDistrictId, ride.DepartureDate, ride.Price, ride.PassengerCount, ride.Comments, "new", waypoint)
 	if err := row.Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return 0, errors.New("you already have a new trip, cancel or end the trip")
@@ -48,7 +54,7 @@ func (r *DriverOrdersPostgres) RideSingleActive(userId int) (models.Ride, error)
 
 func (r *DriverOrdersPostgres) RideSingle(id, userId int) (models.Ride, error) {
 	var list models.Ride
-	listQuery := fmt.Sprintf("SELECT id,from_district_id,to_district_id,departure_date,price,passenger_count,comments,status,view_count,created_at FROM %s WHERE driver_id=$1 AND id=$2", ridesTable)
+	listQuery := fmt.Sprintf("SELECT id,from_district_id,to_district_id,departure_date,price,passenger_count,comments,status,view_count,created_at,waypoint FROM %s WHERE driver_id=$1 AND id=$2", ridesTable)
 	err := r.db.Get(&list, listQuery, userId, id)
 	if err != nil {
 		return models.Ride{}, err
@@ -75,7 +81,7 @@ func (r *DriverOrdersPostgres) RideSingleOrderList(id int) ([]models.Interregion
 
 func (r *DriverOrdersPostgres) RideSingleOrderView(orderId int) (models.InterregionalOrder, error) {
 	var list models.InterregionalOrder
-	listQuery := fmt.Sprintf("SELECT o.id, o.client_id, o.order_status, io.comments, io.passenger_count, o.created_at FROM %s o LEFT JOIN %s io ON o.order_id = io.id WHERE o.id=$1", ordersTable, interregionalOrdersTable)
+	listQuery := fmt.Sprintf("SELECT o.id, io.from_district_id, io.to_district_id, o.client_id, o.order_status, io.comments, io.passenger_count, o.created_at FROM %s o LEFT JOIN %s io ON o.order_id = io.id WHERE o.id=$1", ordersTable, interregionalOrdersTable)
 	err := r.db.Get(&list, listQuery, orderId)
 	if err != nil {
 		return models.InterregionalOrder{}, err

@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS clients
 (
     id serial not null unique,
     name varchar(255) not null,
-    surname varchar(255) not null,
-    birthdate date not null,
+    surname varchar(255),
+    birthdate date,
     gender gender not null,
     avatar varchar(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS rides
     comments varchar(500),
     status ride_status not null,
     view_count integer not null default 0,
+    waypoint integer[] not null default '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

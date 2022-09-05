@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func (h *Handler) driverOrdersCreateRide(c *gin.Context) {
@@ -134,11 +135,28 @@ func (h *Handler) driverOrdersSingleRide(c *gin.Context) {
 		return
 	}
 	list, err := h.services.DriverOrders.RideSingle(id, userId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 	fromId, err := strconv.Atoi(list.FromDistrictId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+	waypoint := *list.Waypoint
+	waypoint = strings.ReplaceAll(waypoint, "{", "")
+	waypoint = strings.ReplaceAll(waypoint, "}", "")
+	waypointArr := strings.Split(waypoint, ",")
+	var waypointNames []string
+	for _, s := range waypointArr {
+		wId, err := strconv.Atoi(s)
+		if err != nil {
+			continue
+		}
+		waypointNames = append(waypointNames, districts[wId])
+	}
+	waypointStr := strings.Join(waypointNames, ",")
 	toId, err := strconv.Atoi(list.ToDistrictId)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
@@ -161,12 +179,23 @@ func (h *Handler) driverOrdersSingleRide(c *gin.Context) {
 	to := districts[toId]
 	list.To = &to
 	list.OrderList = &orderList
+	list.Waypoint = &waypointStr
 	newSuccessResponse(c, http.StatusOK, list)
 }
 func (h *Handler) driverOrdersSingleRideOrderView(c *gin.Context) {
+	langId, err := getLangId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
 	orderId, err := strconv.Atoi(c.Param("order_id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusBadRequest, "invalid order_id param")
+		return
+	}
+	districts, err := h.services.Utils.GetDistrictsArr(langId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	list, err := h.services.DriverOrders.RideSingleOrderView(orderId)
@@ -179,7 +208,21 @@ func (h *Handler) driverOrdersSingleRideOrderView(c *gin.Context) {
 		newErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
+	fromId, err := strconv.Atoi(list.FromDistrictId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	from := districts[fromId]
+	toId, err := strconv.Atoi(list.ToDistrictId)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	to := districts[toId]
 	list.Client = &client
+	list.FromDistrict = &from
+	list.ToDistrict = &to
 	newSuccessResponse(c, http.StatusOK, list)
 }
 func (h *Handler) driverOrdersSingleRideOrderAccept(c *gin.Context) {
