@@ -6,20 +6,22 @@ import (
 	"abir/pkg/utils"
 	"encoding/json"
 	"errors"
-	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 )
 
 type DriverOrdersService struct {
-	repo repository.DriverOrders
-	ch   *amqp.Channel
+	repo      repository.DriverOrders
+	ch        *amqp.Channel
+	fcmClient *utils.FCMClient
 }
 
-func NewDriverOrdersService(repo repository.DriverOrders, ch *amqp.Channel) *DriverOrdersService {
-	return &DriverOrdersService{repo: repo, ch: ch}
+func NewDriverOrdersService(repo repository.DriverOrders, ch *amqp.Channel, fcmClient *utils.FCMClient) *DriverOrdersService {
+	return &DriverOrdersService{repo: repo, ch: ch, fcmClient: fcmClient}
 }
 
 func (s *DriverOrdersService) CreateRide(ride models.Ride, userId int) (int, error) {

@@ -6,8 +6,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type AuthPostgres struct {
@@ -199,7 +200,7 @@ func (r *AuthPostgres) CreateOrUpdateClient(user models.User) (int, error) {
 	}
 	var id int
 	if cnt == 0 {
-		createQuery := fmt.Sprintf("INSERT INTO %s (login, password_hash, user_type) values ($1,$2,$3) RETURNING id", usersTable)
+		createQuery := fmt.Sprintf("INSERT INTO %s (login, password_hash, user_type, firebase_token) values ($1,$2,$3,$4) RETURNING id", usersTable)
 		row := tx.QueryRow(createQuery, user.Login, user.Password, clientType)
 		if err := row.Scan(&id); err != nil {
 			tx.Rollback()
@@ -871,4 +872,28 @@ func (r *AuthPostgres) GetDriverInfo(langId, driverId int) (models.Driver, model
 		return models.Driver{}, models.DriverCar{}, models.DriverCarInfo{}, err
 	}
 	return driver, car, carInfo, nil
+}
+
+func (r *AuthPostgres) PutFirebaseToken(userId int, firebaseToken string) error {
+	updateQuery := fmt.Sprintf(`UPDATE %s SET firebase_token=$1 WHERE user_id=$2`, firebaseTokensTable)
+	rows, err := r.db.Exec(updateQuery, firebaseToken, userId)
+	if err != nil {
+		return err
+	}
+
+	i, err := rows.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if i == 0 {
+		createQuery := `INSERT INTO firebase_tokens(user_id, firebase_token) VALUES($1, $2)`
+		_, err = r.db.Exec(createQuery, userId, firebaseToken)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+
 }

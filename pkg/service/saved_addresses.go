@@ -3,14 +3,16 @@ package service
 import (
 	"abir/models"
 	"abir/pkg/repository"
+	"abir/pkg/utils"
 )
 
 type SavedAddressesService struct {
-	repo repository.SavedAddresses
+	repo      repository.SavedAddresses
+	fcmClient *utils.FCMClient
 }
 
-func NewSavedAddressesService(repo repository.SavedAddresses) *SavedAddressesService {
-	return &SavedAddressesService{repo: repo}
+func NewSavedAddressesService(repo repository.SavedAddresses, fcmClient *utils.FCMClient) *SavedAddressesService {
+	return &SavedAddressesService{repo: repo, fcmClient: fcmClient}
 }
 
 func (s *SavedAddressesService) Get(userId int) ([]models.SavedAddresses, error) {
@@ -25,4 +27,3 @@ func (s *SavedAddressesService) Update(address models.SavedAddresses, addressId,
 func (s *SavedAddressesService) Delete(addressId, userId int) error {
 	return s.repo.Delete(addressId, userId)
 }
-

@@ -4,6 +4,7 @@ import (
 	"abir/models"
 	"abir/pkg/repository"
 	"abir/pkg/storage"
+	"abir/pkg/utils"
 	"context"
 
 	"github.com/go-redis/redis"
@@ -135,15 +136,15 @@ type Service struct {
 	RentCars
 }
 
-func NewService(repos *repository.Repository, client *redis.Client, storage storage.Storage, ch *amqp.Channel) *Service {
+func NewService(repos *repository.Repository, client *redis.Client, storage storage.Storage, ch *amqp.Channel, fcmClient *utils.FCMClient) *Service {
 	return &Service{
-		Authorization:  NewAuthService(repos.Authorization, client, storage),
-		Utils:          NewUtilsService(repos.Utils),
-		SavedAddresses: NewSavedAddressesService(repos.SavedAddresses),
-		CreditCards:    NewCreditCardsService(repos.CreditCards, client),
-		DriverOrders:   NewDriverOrdersService(repos.DriverOrders, ch),
-		ClientOrders:   NewClientOrdersService(repos.ClientOrders, ch),
-		DriverSettings: NewDriverSettingsService(repos.DriverSettings),
-		RentCars:       NewClientRentService(repos.RentCars, ch, storage),
+		Authorization:  NewAuthService(repos.Authorization, client, storage, fcmClient),
+		Utils:          NewUtilsService(repos.Utils, fcmClient),
+		SavedAddresses: NewSavedAddressesService(repos.SavedAddresses, fcmClient),
+		CreditCards:    NewCreditCardsService(repos.CreditCards, client, fcmClient),
+		DriverOrders:   NewDriverOrdersService(repos.DriverOrders, ch, fcmClient),
+		ClientOrders:   NewClientOrdersService(repos.ClientOrders, ch, fcmClient),
+		DriverSettings: NewDriverSettingsService(repos.DriverSettings, fcmClient),
+		RentCars:       NewClientRentService(repos.RentCars, ch, storage, fcmClient),
 	}
 }

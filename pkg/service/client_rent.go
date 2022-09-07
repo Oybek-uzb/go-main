@@ -15,6 +15,7 @@ type ClientRentService struct {
 	repo        repository.RentCars
 	ch          *amqp.Channel
 	fileStorage storage.Storage
+	fcmClient   *utils.FCMClient
 }
 
 func (c *ClientRentService) DeleteMyCar(userId, carId, myCompanyId int) (int, error) {
@@ -273,10 +274,11 @@ func (c *ClientRentService) GetCategoriesForEvents(langId int) ([]models.CarCate
 	return carCategories, nil
 }
 
-func NewClientRentService(repo repository.RentCars, ch *amqp.Channel, s storage.Storage) *ClientRentService {
+func NewClientRentService(repo repository.RentCars, ch *amqp.Channel, s storage.Storage, fcmClient *utils.FCMClient) *ClientRentService {
 	return &ClientRentService{
 		repo:        repo,
 		ch:          ch,
 		fileStorage: s,
+		fcmClient:   fcmClient,
 	}
 }

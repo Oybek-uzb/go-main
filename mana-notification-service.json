@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "mana-notification-servic-155e5",
+  "private_key_id": "5e5bbede00972b7808b646c1a95faccba00581ce",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDixAvKKlMmRzGL\nuvd+Z44RsEnSN7RE9ls50L4HPEDUZYchOfa4FgSekpHeawOcNcZieY/PO9P6b0xI\n8ZWGDoRioTh6a/LGVhhmQhgL11y4hfWLGYc3VMw6o+Spm99n2RG5PwOl8wPbWs5b\nLtwsxPNjAk2B4IP6t57Ypszk96+l59vlJI+qU0bFY5dcp92O03XeciLzaZQLyvdX\nJUEFH2O40pwNPw3rMfyWi1+KoibBc1kfy9X3GAsEFGdOPgxNzef95XJbk5vRR1uL\nzSc8U+vTYsoyt2nKkQrvt1PeQCiW9R1p4aPCE0F7EeuzypMp+2MkDevcZvh6nDCY\nZHsyMoSdAgMBAAECggEACAPu+L/jPYShszMyIVUut+BX06blZ9SfZ91Bgkb2cat/\nCcUfO+WHV0WOA2Mb9w8NipiKZURTm1QIycFETD9CHaxeLzGWnL0ZUq/+YpjDrcAK\nbFbEKUgFigMWB4q7bFPHZRldmyWKWtwMVDvFS43QnozLyY3yjE+mPTk0H9nDayVE\nX4lSGWgKG5m7MLk6OqA26ph9X+Rbm4Va+yedzhiN1t4Fl2QeHYApBdOGTe2bk0PU\nggc5dcQ3XuYEGxj6OS0C6Ffxzupbi2O+vDYJc0JR8KG6GguMKycHMPDJyd4RH1hz\njGqXS7QSsHUIStSq7fruI3nRvZeA0SugRJH5gW40XwKBgQDx/kaUigSOMxQ7OVD2\nGjVhpKieI0Eu/wPWYnKkhthO/sUQC8XMYJI8zPiLvsCVICmSTC4nGyZGCI68LfgM\nuyWY++60pA2Ue/jW9B++1LfVCdDlcpLJPgZoRhYxiIMX8t6hvzlqg3OCAn2oktt6\nSI4nP7KDhNHs4hPE8gv7Pp8/KwKBgQDv5CNeAknNOMIYEWPzIXa7c1/DNb9agmvm\ntxOlFvcFwtqbC4HR6WmYjqpoN/icMq0094/QrTvaMCNeMo3LnZJ5LxGiRS5Xl7Ew\n4oTVD2RCOUdT5SXf2ZoDh4n05cBFXVou4C8+yvz57aRCQnqIs7C+TlegU3diDUts\nydkuoB2nVwKBgF4NBGNwrMqTgZZu9U9g6kRT2ZD0hL3+MQCebI4TNnilPfO5j5ua\nINvukd7GOVT8Fgwc/YcHXz2yz77FYvWXusoViDW+2ORPtmvcn4XsaLIsyXqTqAb8\ny0K1kqSXuNOS+gIFLwx9oGP0EeB1i0Wgc1c/w2KoOWqGh0ZxCEUSlpPXAoGBAMW/\nwofUSxIpH5bHfyUFCOMtEFvTCpKJwHjHoiIM9ESDg8Ebk0B+sNVZhY+z0/Susalg\nCeVzaEtMM1uLQOgAVKYg7uBdNv5txVsO34Di1zrgDLRTyQzmS9ds+4QtgHmtopHR\nrCCPJErCYw1bz7awqZm26vT22Qqy+uIK4kVVKByxAoGBAIcfr0k4egk+KoB/C4TT\nrn7xj41/Qla6jI0fAwnUIFQlgVnNPn+ECRLQ7wf65hmAqJcMhBuxHyZmbobSah2h\nrXGMOTWJtYSOISGM8qJSZ6KgPJvhH1dheLgTs8JosD8ezHq8++cyifV6omIAH87E\nH0f105ClDPuehV9FmsetUHha\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-flcfa@mana-notification-servic-155e5.iam.gserviceaccount.com",
+  "client_id": "105030343366171560758",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-flcfa%40mana-notification-servic-155e5.iam.gserviceaccount.com"
+}

@@ -6,19 +6,21 @@ import (
 	"abir/pkg/utils"
 	"encoding/json"
 	"errors"
-	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 	"math"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 )
 
 type ClientOrdersService struct {
-	repo repository.ClientOrders
-	ch   *amqp.Channel
+	repo      repository.ClientOrders
+	ch        *amqp.Channel
+	fcmClient *utils.FCMClient
 }
 
-func NewClientOrdersService(repo repository.ClientOrders, ch *amqp.Channel) *ClientOrdersService {
-	return &ClientOrdersService{repo: repo, ch: ch}
+func NewClientOrdersService(repo repository.ClientOrders, ch *amqp.Channel, fcmClient *utils.FCMClient) *ClientOrdersService {
+	return &ClientOrdersService{repo: repo, ch: ch, fcmClient: fcmClient}
 }
 
 func (s *ClientOrdersService) RideList(ride models.Ride, langId, page int) ([]models.ClientRideList, models.Pagination, error) {

@@ -8,6 +8,7 @@ import (
 	"abir/pkg/repository/postgres"
 	"abir/pkg/service"
 	"abir/pkg/storage"
+	"abir/pkg/utils"
 	"flag"
 
 	"github.com/streadway/amqp"
@@ -122,10 +123,13 @@ func main() {
 		logrus.Fatalf("failed to initialize public db: %s", err.Error())
 	}
 
-	// firebaseApp := firebase.App{}
+	fcmClient, err := utils.NewFCMClient(context.Background())
+	if err != nil {
+		logrus.Fatalf("failed to initialize firebase-fcm-client: %s", err.Error())
+	}
 
 	repos := repository.NewRepository(dashboardDb, publicDb)
-	services := service.NewService(repos, redisClient, minioStorage, ch)
+	services := service.NewService(repos, redisClient, minioStorage, ch, fcmClient)
 	handlers := handler.NewHandler(services)
 
 	srv := abir.NewServer()

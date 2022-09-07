@@ -26,6 +26,7 @@ type AuthService struct {
 	repo        repository.Authorization
 	redisClient *redis.Client
 	fileStorage storage.Storage
+	fcmClient   *utils.FCMClient
 }
 
 type tokenClaims struct {
@@ -34,8 +35,8 @@ type tokenClaims struct {
 	UserType string `json:"user_type"`
 }
 
-func NewAuthService(repo repository.Authorization, client *redis.Client, fileStorage storage.Storage) *AuthService {
-	return &AuthService{repo: repo, redisClient: client, fileStorage: fileStorage}
+func NewAuthService(repo repository.Authorization, client *redis.Client, fileStorage storage.Storage, fcmClient *utils.FCMClient) *AuthService {
+	return &AuthService{repo: repo, redisClient: client, fileStorage: fileStorage, fcmClient: fcmClient}
 }
 
 func (s *AuthService) CreateClient(ctx context.Context, client models.Client, userId int) error {

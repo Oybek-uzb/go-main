@@ -5,19 +5,21 @@ import (
 	"abir/pkg/repository"
 	"abir/pkg/utils"
 	"errors"
-	"github.com/go-redis/redis"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/go-redis/redis"
 )
 
 type CreditCardsService struct {
-	repo repository.CreditCards
+	repo        repository.CreditCards
 	redisClient *redis.Client
+	fcmClient   *utils.FCMClient
 }
 
-func NewCreditCardsService(repo repository.CreditCards, redisClient *redis.Client) *CreditCardsService {
-	return &CreditCardsService{repo: repo, redisClient: redisClient}
+func NewCreditCardsService(repo repository.CreditCards, redisClient *redis.Client, fcmClient *utils.FCMClient) *CreditCardsService {
+	return &CreditCardsService{repo: repo, redisClient: redisClient, fcmClient: fcmClient}
 }
 
 func (s *CreditCardsService) Get(userId int) ([]models.CreditCards, error) {
@@ -29,14 +31,14 @@ func (s *CreditCardsService) Store(creditCard models.CreditCards, userId int) (i
 func (s *CreditCardsService) SendActivationCode(creditCardId, userId int) (string, error) {
 	codeMin := 10000
 	codeMax := 99999
-	code := strconv.Itoa(rand.Intn(codeMax - codeMin) + codeMin)
+	code := strconv.Itoa(rand.Intn(codeMax-codeMin) + codeMin)
 	code = strconv.Itoa(11111)
 
-	_, ok := s.redisClient.Get("card_activation"+ strconv.Itoa(creditCardId)).Result()
+	_, ok := s.redisClient.Get("card_activation" + strconv.Itoa(creditCardId)).Result()
 	if ok == nil {
 		return "", errors.New("try after a while")
 	}
-	err := s.redisClient.Set("card_activation"+strconv.Itoa(creditCardId), code, 2 * time.Minute).Err()
+	err := s.redisClient.Set("card_activation"+strconv.Itoa(creditCardId), code, 2*time.Minute).Err()
 	if err != nil {
 		return "", err
 	}
@@ -53,7 +55,7 @@ func (s *CreditCardsService) SendActivationCode(creditCardId, userId int) (strin
 	}
 	phone := card.Card.Phone
 	if len(phone) != 12 {
-		phone = "998"+phone
+		phone = "998" + phone
 	}
 	phone = utils.HidePhone(phone)
 	//err = utils.SendSms(login, "Your verification code - "+code)
@@ -63,7 +65,7 @@ func (s *CreditCardsService) SendActivationCode(creditCardId, userId int) (strin
 	return phone, nil
 }
 func (s *CreditCardsService) Activate(creditCardId, userId int, code string) error {
-	activationCode, err := s.redisClient.Get("card_activation"+ strconv.Itoa(creditCardId)).Result()
+	activationCode, err := s.redisClient.Get("card_activation" + strconv.Itoa(creditCardId)).Result()
 	if err != nil {
 		return err
 	}
@@ -75,4 +77,3 @@ func (s *CreditCardsService) Activate(creditCardId, userId int, code string) err
 func (s *CreditCardsService) Delete(creditCardId, userId int) error {
 	return s.repo.Delete(creditCardId, userId)
 }
-

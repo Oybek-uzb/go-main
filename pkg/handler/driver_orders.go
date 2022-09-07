@@ -4,10 +4,11 @@ import (
 	"abir/models"
 	"abir/pkg/utils"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (h *Handler) driverOrdersCreateRide(c *gin.Context) {

@@ -184,3 +184,10 @@ CREATE TABLE IF NOT EXISTS driver_statuses
     user_id int not null,
     driver_status driver_sts not null default 'offline'
 );
+
+CREATE TABLE IF NOT EXISTS firebase_tokens
+(
+    id serial not null unique,
+    user_id int references users (id),
+    firebase_token text not null
+);

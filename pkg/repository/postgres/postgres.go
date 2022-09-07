@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -10,6 +11,8 @@ const (
 	usersTable     = "users"
 	driverTable    = "driver_driver"
 	driverCarTable = "driver_car"
+
+	firebaseTokensTable = "firebase_tokens"
 
 	colorsTable                       = "dictionary_color"
 	colorsLangTable                   = "dictionary_color_i18n"

@@ -300,6 +300,13 @@ func (h *Handler) driverSignIn(c *gin.Context) {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	err = h.services.PutFirebaseToken(userId, input.FirebaseToken)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	driver, err := h.services.GetDriver(userId)
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"token":      token,

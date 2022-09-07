@@ -3,15 +3,17 @@ package service
 import (
 	"abir/models"
 	"abir/pkg/repository"
+	"abir/pkg/utils"
 	"context"
 )
 
 type UtilsService struct {
-	repo repository.Utils
+	repo      repository.Utils
+	fcmClient *utils.FCMClient
 }
 
-func NewUtilsService(repo repository.Utils) *UtilsService {
-	return &UtilsService{repo: repo}
+func NewUtilsService(repo repository.Utils, fcmClient *utils.FCMClient) *UtilsService {
+	return &UtilsService{repo: repo, fcmClient: fcmClient}
 }
 
 func (s *UtilsService) GetColors(langId int) ([]models.Color, error) {
