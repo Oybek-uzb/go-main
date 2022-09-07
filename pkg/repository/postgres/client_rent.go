@@ -246,7 +246,7 @@ func (r *RentCarsPostgres) GetCategoriesForEvents(langId int) ([]models.CarCateg
 func (r *RentCarsPostgres) GetCarsByCategoryId(categoryId int) ([]models.CarByCategoryId, error) {
 	var cars []models.CarByCategoryId
 
-	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.discount, car.in_discount, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id WHERE car.category_car_id=$1 AND company.status='checked'`, carsTable, carsModelTable, carsCompanyTable)
+	query := fmt.Sprintf(`SELECT car.id, car.price, car.photo, car.discount, car.in_discount, model.name model_name, company.name company_name FROM %[1]s car LEFT JOIN %[2]s model ON car.car_model_id = model.id LEFT JOIN %[3]s company ON car.rent_car_company_id = company.id WHERE car.category_car_id=$1 AND (company.status='checked' OR car.rent_car_company_id IS NULL)`, carsTable, carsModelTable, carsCompanyTable)
 	err := r.dash.Select(&cars, query, categoryId)
 
 	return cars, err
