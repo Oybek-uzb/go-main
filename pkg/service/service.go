@@ -123,6 +123,7 @@ type RentCars interface {
 
 	GetCategoriesForEvents(langId int) ([]models.CarCategory, error)
 	GetMyCarsForEvents(userId, langId int) ([]models.MyCarForEvents, error)
+	PostMyCarForEvents(ctx context.Context, userId int, car models.CarCreate) (int, error)
 }
 
 type Service struct {

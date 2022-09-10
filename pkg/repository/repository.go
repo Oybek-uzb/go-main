@@ -120,6 +120,7 @@ type RentCars interface {
 
 	GetCategoriesForEvents(langId int) ([]models.CarCategory, error)
 	GetMyCarsForEvents(userId, langId int) ([]models.MyCarForEvents, error)
+	PostMyCarForEvents(userId int, car models.CarCreate) (int, error)
 }
 
 type Repository struct {

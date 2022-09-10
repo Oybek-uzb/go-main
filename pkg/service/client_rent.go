@@ -101,6 +101,31 @@ func (c *ClientRentService) PostMyCar(ctx context.Context, userId, companyId int
 	return carId, nil
 }
 
+func (c *ClientRentService) PostMyCarForEvents(ctx context.Context, userId int, car models.CarCreate) (int, error) {
+	if car.Photo != nil && *car.Photo != "" {
+		fileName, err := utils.GenerateFileName()
+		if err != nil {
+			return 0, err
+		}
+		uploadedFileName, err := c.fileStorage.Upload(ctx, storage.UploadInput{
+			File:   *car.Photo,
+			Name:   fileName,
+			Folder: "companies",
+		})
+		if err != nil {
+			return 0, err
+		}
+		car.Photo = &uploadedFileName
+	}
+
+	carId, err := c.repo.PostMyCarForEvents(userId, car)
+	if err != nil {
+		return 0, err
+	}
+
+	return carId, nil
+}
+
 func (c *ClientRentService) PutMyCar(ctx context.Context, userId, carId, companyId int, car models.CarCreate) (int, error) {
 	if car.Photo != nil && *car.Photo != "" {
 		fileName, err := utils.GenerateFileName()

@@ -240,6 +240,33 @@ func (h *Handler) rentForEventsMyCars(c *gin.Context) {
 	newSuccessResponse(c, http.StatusOK, myCars)
 }
 
+func (h *Handler) rentForEventsMyCarCreate(c *gin.Context) {
+	userId, err := getUserId(c)
+	if err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var car models.CarCreate
+	if err := c.Bind(&car); err != nil {
+		newErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = car.ValidateCarCreate()
+	if err != nil {
+		fmt.Println("validation")
+		newErrorResponse(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	carId, err := h.services.RentCars.PostMyCarForEvents(c.Request.Context(), userId, car)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	newSuccessResponse(c, http.StatusOK, carId)
+}
+
 func (h *Handler) myCompanyById(c *gin.Context) {
 	userId, err := getUserId(c)
 	if err != nil {
